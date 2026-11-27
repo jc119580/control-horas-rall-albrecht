@@ -1,0 +1,3044 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EsSalud | Red Asistencial La Libertad - H.I. Albrecht | Control de Horas RALL</title>
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            essalud: {
+              blue: '#005CA9',
+              sky: '#009FE3',
+              dark: '#003865',
+              light: '#F4F7FA',
+              tint: '#E6F2FA',
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- SheetJS (xlsx) para lectura y exportación de archivos Excel -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+
+  <!-- Chart.js para gráficos estadísticos -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <style>
+    body {
+      background-color: #F4F7FA;
+      color: #1E293B;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #E2E8F0;
+      border-radius: 9999px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #94A3B8;
+      border-radius: 9999px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #005CA9;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+      animation: fadeIn 0.25s ease-out forwards;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col font-sans antialiased">
+
+  <!-- Toast / Notificación flotante institucional (sin alert()) -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- ======================================================================= -->
+  <!-- PANTALLA DE INICIO DE SESIÓN OBLIGATORIA POR DNI (USUARIO Y CONTRASEÑA) -->
+  <!-- ======================================================================= -->
+  <div id="loginScreen" class="fixed inset-0 z-40 bg-gradient-to-br from-essalud-dark via-essalud-blue to-[#0073C6] flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-md w-full shadow-2xl border border-sky-200/40 overflow-hidden animate-fade-in">
+      <div class="bg-essalud-light px-6 pt-7 pb-5 text-center border-b border-slate-200">
+        <div class="inline-flex bg-white p-3 rounded-2xl shadow-md border border-sky-100 mb-3">
+          <!-- Logo Vectorial Oficial EsSalud -->
+          <svg width="84" height="76" viewBox="0 0 220 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Logo Oficial EsSalud">
+            <rect width="220" height="200" rx="16" fill="#FFFFFF"/>
+            <circle cx="62" cy="36" r="12" fill="#0078C8"/>
+            <path d="M50 35C48 42 44 45 43 46C46 49 51 49 53 47" fill="#0078C8"/>
+            <path d="M74 35C76 42 80 45 81 46C78 49 73 49 71 47" fill="#0078C8"/>
+            <path d="M52 51L23 72L30 82L49 69L42 110H51L46 138H57L62 110L67 138H78L73 110H82L75 69L94 82L101 72L72 51H52Z" fill="#0078C8"/>
+            <circle cx="126" cy="24" r="13" fill="#0078C8"/>
+            <path d="M114 40L85 63L93 73L113 58V92L104 138H116L126 95L136 138H148L139 92V58L159 73L167 63L138 40H114Z" fill="#0078C8"/>
+            <circle cx="111" cy="68" r="10.5" fill="#29B6F6"/>
+            <path d="M101 67C99 73 96 75 95 76C98 78 102 78 104 76" fill="#29B6F6"/>
+            <path d="M121 67C123 73 126 75 127 76C124 78 120 78 118 76" fill="#29B6F6"/>
+            <path d="M102 80L83 65L76 74L98 92L90 116H99L91 138H102L110 116H113L118 138H129L122 116H129L122 92L141 105L147 96L120 80H102Z" fill="#29B6F6"/>
+            <circle cx="164" cy="68" r="10.5" fill="#29B6F6"/>
+            <path d="M155 81L136 96L143 105L155 95V113L146 138H157L164 116L172 138H183L173 113V95L190 109L197 100L173 81H155Z" fill="#29B6F6"/>
+            <text x="110" y="185" text-anchor="middle" fill="#0078C8" font-family="Inter, Arial, Helvetica, sans-serif" font-weight="900" font-size="47" letter-spacing="-1.5">EsSalud</text>
+          </svg>
+        </div>
+        <span class="inline-block text-[11px] font-bold uppercase tracking-wider bg-essalud-tint text-essalud-blue px-3 py-0.5 rounded-full">
+          Red Asistencial La Libertad
+        </span>
+        <h2 class="text-lg font-extrabold text-essalud-dark mt-1.5">Hospital I Albrecht</h2>
+        <p class="text-xs text-slate-600 mt-0.5">Control Presupuestal de Horas Complementarias (RALL)</p>
+      </div>
+
+      <form onsubmit="handleDniLogin(event)" class="p-6 space-y-4">
+        <div>
+          <label for="loginDniInput" class="block text-xs font-bold text-essalud-dark uppercase tracking-wide mb-1.5">
+            Usuario (Número de DNI Autorizado):
+          </label>
+          <input
+            type="text"
+            id="loginDniInput"
+            maxlength="8"
+            inputmode="numeric"
+            pattern="[0-9]{8}"
+            autocomplete="username"
+            placeholder="Ingrese su DNI (8 dígitos)"
+            class="w-full text-center tracking-[0.22em] font-mono text-base font-extrabold text-essalud-dark bg-slate-50 border-2 border-slate-300 rounded-2xl py-2.5 px-4 focus:outline-none focus:border-essalud-blue focus:bg-white transition"
+            required
+          />
+        </div>
+
+        <div>
+          <label for="loginPassInput" class="block text-xs font-bold text-essalud-dark uppercase tracking-wide mb-1.5">
+            Contraseña (Número de DNI):
+          </label>
+          <div class="relative">
+            <input
+              type="password"
+              id="loginPassInput"
+              maxlength="8"
+              inputmode="numeric"
+              pattern="[0-9]{8}"
+              autocomplete="current-password"
+              placeholder="••••••••"
+              class="w-full text-center tracking-[0.22em] font-mono text-base font-extrabold text-essalud-dark bg-slate-50 border-2 border-slate-300 rounded-2xl py-2.5 px-11 focus:outline-none focus:border-essalud-blue focus:bg-white transition"
+              required
+            />
+            <button
+              type="button"
+              onclick="toggleLoginPasswordVisibility()"
+              id="btnTogglePass"
+              class="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-essalud-blue rounded-lg transition cursor-pointer"
+              title="Mostrar u ocultar contraseña"
+            >
+              <svg id="eyeIconShow" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+              <svg id="eyeIconHide" class="w-5 h-5 hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+              </svg>
+            </button>
+          </div>
+          <p class="text-[11px] text-slate-500 mt-1.5 text-center">
+            Acceso exclusivo para Jefaturas y Administración autorizadas del H.I. Albrecht.
+          </p>
+        </div>
+
+        <div id="loginErrorBox" class="hidden bg-rose-50 border border-rose-200 text-rose-700 text-xs p-3 rounded-xl font-semibold text-center"></div>
+
+        <button
+          type="submit"
+          class="w-full bg-essalud-blue hover:bg-essalud-dark text-white font-bold text-sm py-3 px-4 rounded-2xl shadow-md hover:shadow-lg transition flex items-center justify-center gap-2 cursor-pointer"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+          </svg>
+          Iniciar Sesión en el Sistema
+        </button>
+      </form>
+
+      <div class="bg-slate-50 px-6 py-3 border-t border-slate-200 text-center text-[11px] text-slate-500">
+        Seguro Social de Salud — EsSalud • Control de Acceso por DNI
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================================= -->
+  <!-- ENCABEZADO INSTITUCIONAL ESSALUD                                        -->
+  <!-- ======================================================================= -->
+  <header class="bg-gradient-to-r from-essalud-dark via-essalud-blue to-[#0073C6] text-white shadow-lg border-b-4 border-essalud-sky sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5">
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+
+        <!-- Logo SVG Institucional EsSalud + Identidad -->
+        <div class="flex items-center gap-3.5">
+          <div class="bg-white px-2.5 py-2 rounded-xl shadow-md flex items-center justify-center shrink-0 border border-sky-100">
+            <svg width="64" height="58" viewBox="0 0 220 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Logo Oficial EsSalud">
+              <rect width="220" height="200" rx="16" fill="#FFFFFF"/>
+              <circle cx="62" cy="36" r="12" fill="#0078C8"/>
+              <path d="M50 35C48 42 44 45 43 46C46 49 51 49 53 47" fill="#0078C8"/>
+              <path d="M74 35C76 42 80 45 81 46C78 49 73 49 71 47" fill="#0078C8"/>
+              <path d="M52 51L23 72L30 82L49 69L42 110H51L46 138H57L62 110L67 138H78L73 110H82L75 69L94 82L101 72L72 51H52Z" fill="#0078C8"/>
+              <circle cx="126" cy="24" r="13" fill="#0078C8"/>
+              <path d="M114 40L85 63L93 73L113 58V92L104 138H116L126 95L136 138H148L139 92V58L159 73L167 63L138 40H114Z" fill="#0078C8"/>
+              <circle cx="111" cy="68" r="10.5" fill="#29B6F6"/>
+              <path d="M101 67C99 73 96 75 95 76C98 78 102 78 104 76" fill="#29B6F6"/>
+              <path d="M121 67C123 73 126 75 127 76C124 78 120 78 118 76" fill="#29B6F6"/>
+              <path d="M102 80L83 65L76 74L98 92L90 116H99L91 138H102L110 116H113L118 138H129L122 116H129L122 92L141 105L147 96L120 80H102Z" fill="#29B6F6"/>
+              <circle cx="164" cy="68" r="10.5" fill="#29B6F6"/>
+              <path d="M155 81L136 96L143 105L155 95V113L146 138H157L164 116L172 138H183L173 113V95L190 109L197 100L173 81H155Z" fill="#29B6F6"/>
+              <text x="110" y="185" text-anchor="middle" fill="#0078C8" font-family="Inter, Arial, Helvetica, sans-serif" font-weight="900" font-size="47" letter-spacing="-1.5">EsSalud</text>
+            </svg>
+          </div>
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="text-xs font-bold uppercase tracking-wider bg-essalud-sky/25 text-sky-100 px-2.5 py-0.5 rounded-full border border-sky-300/30">
+                Seguro Social de Salud - EsSalud
+              </span>
+              <span id="badgePeriodo" class="text-xs font-semibold bg-white/15 text-white px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                Noviembre 2026 (01/11/2026 - 30/11/2026)
+              </span>
+              <span id="badgeLastUpdated" class="text-xs font-semibold bg-essalud-dark/80 text-sky-100 px-2.5 py-0.5 rounded-full border border-sky-300/30 flex items-center gap-1.5" title="Fecha y hora de última actualización del reporte">
+                <svg class="w-3.5 h-3.5 text-essalud-sky shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Última actualización: <b id="lastUpdatedText" class="text-white font-mono">--/--/---- --:--:--</b></span>
+              </span>
+              <span id="cloudSyncBadge" class="text-[11px] font-semibold bg-emerald-500/20 text-emerald-100 px-2.5 py-0.5 rounded-full border border-emerald-300/30 flex items-center gap-1.5">
+                <span id="cloudSyncDot" class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                <span id="cloudSyncText">Sincronizado</span>
+              </span>
+            </div>
+            <h1 class="text-lg sm:text-xl font-extrabold tracking-tight mt-0.5 leading-tight">
+              Red Asistencial La Libertad — H.I. Albrecht
+            </h1>
+            <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-sky-100/95 font-medium mt-0.5">
+              <span>Control Presupuestal y Programación (RALL vs. HrasEfectivas)</span>
+              <span class="hidden sm:inline text-sky-300/60">•</span>
+              <span id="publishedByHeader" class="text-sky-200 font-semibold">Publicado por: DNI 42283343 (CARRANZA CASTILLO JOSE)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Botones de Acción Rápida + Control de Sesión y Rol -->
+        <div class="flex flex-wrap items-center gap-2">
+          <!-- Indicador de Rol Activo -->
+          <div id="roleStatusBadge" class="hidden items-center gap-2 bg-emerald-500/25 border border-emerald-300/40 text-emerald-50 px-3 py-2 rounded-xl text-xs font-bold">
+            <svg class="w-4 h-4 text-emerald-300 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+            <span id="roleStatusLabel">Modo Consulta — Jefatura (Solo Visualización)</span>
+          </div>
+
+          <!-- Botones exclusivos del Administrador (DNI 42283343) -->
+          <button id="btnAdminUpload" onclick="openUploadModal()" class="hidden items-center gap-2 bg-white text-essalud-dark hover:bg-sky-50 font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-xl shadow-sm transition cursor-pointer">
+            <svg class="w-4 h-4 text-essalud-blue" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+            </svg>
+            Cargar Excel / TXT
+          </button>
+
+          <button id="btnAdminPublish" onclick="publishCurrentStateToCloud()" class="hidden items-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-essalud-dark font-extrabold text-xs sm:text-sm px-3 py-2.5 rounded-xl shadow-sm transition cursor-pointer" title="Publicar corte actual en el portal para todas las Jefaturas">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+            Publicar en Portal
+          </button>
+
+          <button onclick="manualRefreshDashboard()" class="inline-flex items-center gap-1.5 bg-essalud-sky hover:bg-[#008AC7] text-white font-semibold text-xs sm:text-sm px-3 py-2.5 rounded-xl shadow-sm transition cursor-pointer" title="Refrescar corte y marca de tiempo">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Actualizar
+          </button>
+
+          <button onclick="restorePreloadedData()" id="btnRestore" class="hidden items-center gap-1.5 bg-essalud-dark/70 hover:bg-essalud-dark text-white border border-white/20 font-medium text-xs sm:text-sm px-3 py-2.5 rounded-xl transition cursor-pointer" title="Restaurar datos oficiales de Noviembre 2026 H.I. Albrecht">
+            <svg class="w-4 h-4 text-essalud-sky" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+            </svg>
+            Restaurar Nov. 2026
+          </button>
+
+          <button onclick="exportToExcel()" class="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs sm:text-sm px-3.5 py-2.5 rounded-xl shadow-sm transition cursor-pointer">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            Exportar Excel
+          </button>
+
+          <button onclick="logoutDniSession()" class="inline-flex items-center gap-1.5 bg-rose-600/90 hover:bg-rose-600 text-white font-semibold text-xs px-3 py-2.5 rounded-xl shadow-sm transition cursor-pointer" title="Cerrar sesión o cambiar de DNI">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            Salir (<span id="sessionDniTag">---</span>)
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- TARJETAS KPI EJECUTIVAS -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="kpiSection">
+      <!-- KPI 1: Horas Aprobadas RALL -->
+      <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 relative overflow-hidden">
+        <div class="flex items-start justify-between">
+          <div>
+            <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Total Aprobado RALL</p>
+            <h2 id="kpiAprobadoTotal" class="text-2xl sm:text-3xl font-extrabold text-essalud-dark mt-1">2,848.83 h</h2>
+          </div>
+          <div class="p-2.5 bg-essalud-tint text-essalud-blue rounded-xl">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+        </div>
+        <div id="kpiAprobadoSub" class="mt-3 pt-3 border-t border-slate-100 text-xs text-slate-600 space-y-1">
+          <div class="flex justify-between">
+            <span>HE: <b>2,096.00 h</b> | RPCT: <b>364.00 h</b></span>
+          </div>
+          <div class="flex justify-between text-essalud-blue font-medium">
+            <span>PCT Cons: 180.00 h | Proc: 208.83 h</span>
+          </div>
+          <div class="text-[11px] text-slate-500 font-semibold">
+            Presupuesto Certificado: <span class="text-slate-800">S/. 136,937.02</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- KPI 2: Horas Programadas No Ordinarias -->
+      <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 relative overflow-hidden">
+        <div class="flex items-start justify-between">
+          <div>
+            <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Total Programado (TXT)</p>
+            <h2 id="kpiProgramadoTotal" class="text-2xl sm:text-3xl font-extrabold text-essalud-blue mt-1">2,645.00 h</h2>
+          </div>
+          <div class="p-2.5 bg-sky-50 text-essalud-sky rounded-xl">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </div>
+        </div>
+        <div id="kpiProgramadoSub" class="mt-3 pt-3 border-t border-slate-100 text-xs text-slate-600 space-y-1">
+          <div class="flex justify-between">
+            <span>HE: <b>1,950.00 h</b> | RPCT-CAS: <b>364.00 h</b></span>
+          </div>
+          <div class="flex justify-between">
+            <span>RPCT Cons/Proc/Quir: <b>331.00 h</b></span>
+          </div>
+          <div class="text-[11px] text-emerald-700 font-semibold">
+            Horas Efectivas Atendidas: <span>2,547.00 h</span> (96.3%)
+          </div>
+        </div>
+      </div>
+
+      <!-- KPI 3: Saldo Neto Global y Sobregiro Bruto -->
+      <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 relative overflow-hidden">
+        <div class="flex items-start justify-between">
+          <div>
+            <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Saldo Neto Global</p>
+            <h2 id="kpiSaldoNeto" class="text-2xl sm:text-3xl font-extrabold text-emerald-600 mt-1">+203.83 h</h2>
+          </div>
+          <div class="p-2.5 bg-amber-50 text-amber-600 rounded-xl">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+        </div>
+        <div id="kpiSaldoSub" class="mt-3 pt-3 border-t border-slate-100 text-xs space-y-1">
+          <div class="flex items-center justify-between text-rose-600 font-bold">
+            <span>Sobregiro en excedidos:</span>
+            <span id="kpiSobregiro">+488.00 h</span>
+          </div>
+          <div class="flex items-center justify-between text-emerald-700 font-medium">
+            <span>Saldo no utilizado en disp.:</span>
+            <span id="kpiDisponibleBruto">-691.83 h</span>
+          </div>
+          <div class="text-[11px] text-slate-500">
+            Ejecución global: <b id="kpiPctGlobal">92.8%</b> del techo RALL
+          </div>
+        </div>
+      </div>
+
+      <!-- KPI 4: Semáforo de Servicios / Grupos -->
+      <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 relative overflow-hidden">
+        <div class="flex items-start justify-between">
+          <div>
+            <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Estado de Servicios</p>
+            <div class="flex items-baseline gap-2 mt-1">
+              <h2 id="kpiExcedidosCount" class="text-2xl sm:text-3xl font-extrabold text-rose-600">14</h2>
+              <span class="text-xs font-bold uppercase text-rose-600">Excedidos</span>
+            </div>
+          </div>
+          <div class="p-2.5 bg-rose-50 text-rose-600 rounded-xl">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+          </div>
+        </div>
+        <div class="mt-3 pt-3 border-t border-slate-100 text-xs space-y-1.5">
+          <div class="flex items-center justify-between">
+            <span class="inline-flex items-center gap-1.5 text-amber-700 font-semibold">
+              <span class="w-2 h-2 rounded-full bg-amber-500"></span> Por Agotar (&ge;85%):
+            </span>
+            <span id="kpiAlertaCount" class="font-bold text-amber-700">2</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="inline-flex items-center gap-1.5 text-emerald-700 font-semibold">
+              <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Disponibles (&lt;85%):
+            </span>
+            <span id="kpiDisponibleCount" class="font-bold text-emerald-700">13</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="inline-flex items-center gap-1.5 text-essalud-blue font-semibold">
+              <span class="w-2 h-2 rounded-full bg-essalud-blue"></span> Completo (100%):
+            </span>
+            <span id="kpiCompletoCount" class="font-bold text-essalud-blue">1</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- BANNER DE NOTA TÉCNICA / CONSOLIDACIÓN ENFERMERÍA PROCEDIMIENTOS -->
+    <div id="enfermeriaToggleBar" class="bg-white border border-sky-200 rounded-2xl p-4 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+      <div class="flex items-start gap-3">
+        <div class="p-2 bg-essalud-tint text-essalud-blue rounded-xl shrink-0 mt-0.5">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <div class="text-xs sm:text-sm text-slate-700">
+          <span class="font-bold text-essalud-dark">Nota de Auditoría RALL (Enfermería):</span> En el Formato Nº 01 figuran <b>150.00 h HE</b> aprobadas para Enfermería en <i>"PROCEDIMIENTOS"</i> (Inyectables / Proc. Preventivos de Consulta Externa). Puede visualizarlas por separado (como figura en el Excel oficial) o consolidarlas con <i>Consulta Externa</i> para evaluar el saldo real combinado.
+        </div>
+      </div>
+      <label class="inline-flex items-center gap-2.5 bg-essalud-light hover:bg-sky-50 border border-slate-200 px-3.5 py-2 rounded-xl cursor-pointer shrink-0 select-none transition">
+        <input type="checkbox" id="chkConsolidarEnf" onchange="toggleConsolidarEnfermeria()" class="w-4 h-4 text-essalud-blue rounded focus:ring-essalud-sky cursor-pointer" />
+        <span class="text-xs font-bold text-essalud-dark">Consolidar Enf. Procedimientos + C. Externa</span>
+      </label>
+    </div>
+
+    <!-- NAVEGACIÓN PRINCIPAL POR PESTAÑAS (TABS) -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+      <div class="border-b border-slate-200 bg-slate-50/70 px-4 pt-3 flex flex-wrap gap-2" role="tablist">
+        <button onclick="switchTab('matriz')" id="tab-btn-matriz" class="tab-btn px-4 py-2.5 text-xs sm:text-sm font-bold rounded-t-xl border-b-2 border-essalud-blue text-essalud-blue bg-white transition flex items-center gap-2 cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+          </svg>
+          1. Matriz de Cruce RALL vs. Programación
+        </button>
+
+        <button onclick="switchTab('personal')" id="tab-btn-personal" class="tab-btn px-4 py-2.5 text-xs sm:text-sm font-semibold rounded-t-xl border-b-2 border-transparent text-slate-600 hover:text-essalud-blue transition flex items-center gap-2 cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          2. Detalle Nominal por Profesional (TXT)
+          <span id="badgePersonalTotal" class="bg-slate-200 text-slate-700 text-[11px] font-bold px-2 py-0.5 rounded-full">49</span>
+        </button>
+
+        <button onclick="switchTab('alertas')" id="tab-btn-alertas" class="tab-btn px-4 py-2.5 text-xs sm:text-sm font-semibold rounded-t-xl border-b-2 border-transparent text-slate-600 hover:text-essalud-blue transition flex items-center gap-2 cursor-pointer">
+          <svg class="w-4 h-4 text-rose-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+          </svg>
+          3. Generador de Alertas y Memorandos a Jefaturas
+        </button>
+
+        <button onclick="switchTab('graficos')" id="tab-btn-graficos" class="tab-btn px-4 py-2.5 text-xs sm:text-sm font-semibold rounded-t-xl border-b-2 border-transparent text-slate-600 hover:text-essalud-blue transition flex items-center gap-2 cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+          4. Gráficos Comparativos
+        </button>
+      </div>
+
+      <!-- ===================================================================== -->
+      <!-- TAB 1: MATRIZ DE CRUCE RALL VS PROGRAMACIÓN                           -->
+      <!-- ===================================================================== -->
+      <div id="tab-content-matriz" class="p-4 sm:p-6 space-y-4 animate-fade-in">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-essalud-light p-3.5 rounded-xl border border-slate-200/80">
+          <div class="flex flex-wrap items-center gap-1.5" id="statusFilterGroup">
+            <button onclick="setStatusFilter('ALL')" data-status="ALL" class="status-pill px-3 py-1.5 rounded-lg text-xs font-bold bg-essalud-blue text-white shadow-sm cursor-pointer">
+              Todos (<span id="count-ALL">30</span>)
+            </button>
+            <button onclick="setStatusFilter('EXCEDIDO')" data-status="EXCEDIDO" class="status-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-rose-700 border border-rose-200 hover:bg-rose-50 cursor-pointer">
+              Excedido / Sin Aprob. (<span id="count-EXCEDIDO">14</span>)
+            </button>
+            <button onclick="setStatusFilter('ALERTA')" data-status="ALERTA" class="status-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-amber-700 border border-amber-200 hover:bg-amber-50 cursor-pointer">
+              Por Agotar &ge;85% (<span id="count-ALERTA">2</span>)
+            </button>
+            <button onclick="setStatusFilter('DISPONIBLE')" data-status="DISPONIBLE" class="status-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-emerald-700 border border-emerald-200 hover:bg-emerald-50 cursor-pointer">
+              Disponible (<span id="count-DISPONIBLE">13</span>)
+            </button>
+            <button onclick="setStatusFilter('COMPLETO')" data-status="COMPLETO" class="status-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-essalud-blue border border-sky-200 hover:bg-sky-50 cursor-pointer">
+              Completo 100% (<span id="count-COMPLETO">1</span>)
+            </button>
+          </div>
+
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            <select id="filterGrupoSelect" onchange="renderMatrixTable()" class="bg-white border border-slate-300 text-slate-700 text-xs font-semibold rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-essalud-sky">
+              <option value="ALL">Todos los Grupos Ocupacionales</option>
+            </select>
+
+            <div class="relative">
+              <input type="text" id="searchMatrixInput" oninput="renderMatrixTable()" placeholder="Buscar servicio o grupo..." class="w-full sm:w-56 bg-white border border-slate-300 text-slate-700 text-xs rounded-xl pl-8 pr-3 py-2 focus:outline-none focus:ring-2 focus:ring-essalud-sky" />
+              <svg class="w-4 h-4 text-slate-400 absolute left-2.5 top-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto custom-scrollbar rounded-xl border border-slate-200">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-essalud-dark text-white text-[11px] uppercase tracking-wider">
+                <th class="py-3 px-3.5 font-bold">Grupo Ocupacional / Servicio</th>
+                <th class="py-3 px-3 font-bold text-right">Aprobado RALL</th>
+                <th class="py-3 px-3 font-bold text-right">Programado TXT</th>
+                <th class="py-3 px-3 font-bold text-right">Saldo (Prog - Aprob)</th>
+                <th class="py-3 px-3 font-bold w-40">Ejecución %</th>
+                <th class="py-3 px-3 font-bold text-center">Estado</th>
+                <th class="py-3 px-3.5 font-bold text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="matrixTableBody" class="divide-y divide-slate-200 text-xs sm:text-sm bg-white"></tbody>
+            <tfoot id="matrixTableFoot" class="bg-slate-100 font-bold text-xs sm:text-sm text-essalud-dark border-t-2 border-slate-300"></tfoot>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===================================================================== -->
+      <!-- TAB 2: DETALLE NOMINAL POR PROFESIONAL (TXT)                          -->
+      <!-- ===================================================================== -->
+      <div id="tab-content-personal" class="hidden p-4 sm:p-6 space-y-4 animate-fade-in">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-essalud-light p-3.5 rounded-xl border border-slate-200/80">
+          <div>
+            <h3 class="text-sm font-bold text-essalud-dark">Registro Nominal de Horas Complementarias (HrasEfectivas TXT)</h3>
+            <p class="text-xs text-slate-600">Excluye Horas Ordinarias y Horas de Compensación. Detalle por trabajador, servicio y modalidad.</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <select id="filterPersonalGrupo" onchange="renderPersonnelTable()" class="bg-white border border-slate-300 text-slate-700 text-xs font-semibold rounded-xl px-3 py-2">
+              <option value="ALL">Todos los Grupos</option>
+            </select>
+            <select id="filterPersonalServicio" onchange="renderPersonnelTable()" class="bg-white border border-slate-300 text-slate-700 text-xs font-semibold rounded-xl px-3 py-2">
+              <option value="ALL">Todos los Servicios</option>
+            </select>
+            <select id="filterPersonalTipo" onchange="renderPersonnelTable()" class="bg-white border border-slate-300 text-slate-700 text-xs font-semibold rounded-xl px-3 py-2">
+              <option value="ALL">Todas las Modalidades</option>
+            </select>
+            <input type="text" id="searchPersonalInput" oninput="renderPersonnelTable()" placeholder="DNI o Apellidos..." class="bg-white border border-slate-300 text-slate-700 text-xs rounded-xl px-3 py-2 w-48" />
+          </div>
+        </div>
+
+        <div class="overflow-x-auto custom-scrollbar rounded-xl border border-slate-200">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-essalud-dark text-white text-[11px] uppercase tracking-wider">
+                <th class="py-3 px-3 font-bold">DNI</th>
+                <th class="py-3 px-3 font-bold">Profesional de Salud / Asistencial</th>
+                <th class="py-3 px-3 font-bold">Grupo Ocupacional</th>
+                <th class="py-3 px-3 font-bold">Servicio RALL / Subactividad</th>
+                <th class="py-3 px-3 font-bold">Modalidad Prog.</th>
+                <th class="py-3 px-3 font-bold text-right">H. Prog.</th>
+                <th class="py-3 px-3 font-bold text-right">H. Efectivas</th>
+              </tr>
+            </thead>
+            <tbody id="personnelTableBody" class="divide-y divide-slate-200 text-xs bg-white"></tbody>
+            <tfoot id="personnelTableFoot" class="bg-slate-100 font-bold text-xs text-essalud-dark border-t-2 border-slate-300"></tfoot>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===================================================================== -->
+      <!-- TAB 3: GENERADOR DE ALERTAS Y MEMORANDOS PARA JEFATURAS               -->
+      <!-- ===================================================================== -->
+      <div id="tab-content-alertas" class="hidden p-4 sm:p-6 space-y-5 animate-fade-in">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div class="lg:col-span-5 space-y-4 bg-essalud-light p-4 rounded-2xl border border-slate-200">
+            <div>
+              <h3 class="text-sm font-extrabold text-essalud-dark flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-rose-600"></span>
+                Configurar Notificación Institucional
+              </h3>
+              <p class="text-xs text-slate-600 mt-1">
+                Seleccione un servicio/grupo específico o genere el reporte consolidado de alertas críticas para Jefaturas de Servicio, Oficina de Administración y Dirección del H.I. Albrecht.
+              </p>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Servicio / Grupo a Notificar:</label>
+              <select id="alertServiceSelect" onchange="generateAlertMessage()" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-essalud-blue"></select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Destinatario / Jefatura:</label>
+              <select id="alertRecipientSelect" onchange="generateAlertMessage()" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-800">
+                <option value="Jefatura de Servicio / Departamento Asistencial">Jefatura de Servicio / Departamento Asistencial</option>
+                <option value="Jefatura de Enfermería - H.I. Albrecht">Jefatura de Enfermería - H.I. Albrecht</option>
+                <option value="Jefatura de Oficina de Administración / Recursos Humanos">Jefatura de Oficina de Administración / RR.HH.</option>
+                <option value="Dirección del Hospital I Albrecht - RALL">Dirección del Hospital I Albrecht - RALL</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Formato de Comunicación:</label>
+              <div class="grid grid-cols-2 gap-2">
+                <button type="button" onclick="setAlertFormat('MEMO')" id="btnFormatMemo" class="py-2 px-3 rounded-xl text-xs font-bold bg-essalud-blue text-white shadow-sm cursor-pointer">
+                  Memorando / Correo Formal
+                </button>
+                <button type="button" onclick="setAlertFormat('WHATSAPP')" id="btnFormatWa" class="py-2 px-3 rounded-xl text-xs font-bold bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 cursor-pointer">
+                  Alerta Rápida WhatsApp
+                </button>
+              </div>
+            </div>
+
+            <div class="pt-2 flex flex-col sm:flex-row gap-2">
+              <button onclick="copyAlertText()" class="flex-1 inline-flex items-center justify-center gap-2 bg-essalud-blue hover:bg-essalud-dark text-white font-bold text-xs py-2.5 px-4 rounded-xl shadow transition cursor-pointer">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                </svg>
+                Copiar Mensaje
+              </button>
+              <button onclick="openMailtoAlert()" class="inline-flex items-center justify-center gap-2 bg-white hover:bg-sky-50 text-essalud-blue border border-essalud-blue font-bold text-xs py-2.5 px-4 rounded-xl transition cursor-pointer">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                Enviar Correo
+              </button>
+            </div>
+          </div>
+
+          <div class="lg:col-span-7 flex flex-col">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Vista Previa del Documento / Notificación (Editable)</span>
+              <span id="alertStatusTag" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-700">ALERTA CRÍTICA</span>
+            </div>
+            <textarea id="alertPreviewTextarea" rows="16" class="w-full flex-1 bg-slate-900 text-slate-100 font-mono text-xs leading-relaxed p-4 rounded-2xl border border-slate-700 focus:outline-none focus:ring-2 focus:ring-essalud-sky custom-scrollbar"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================================================================== -->
+      <!-- TAB 4: GRÁFICOS COMPARATIVOS (CHART.JS)                               -->
+      <!-- ===================================================================== -->
+      <div id="tab-content-graficos" class="hidden p-4 sm:p-6 space-y-6 animate-fade-in">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+            <h3 class="text-sm font-extrabold text-essalud-dark mb-1">Horas Aprobadas RALL vs. Programadas por Grupo Ocupacional</h3>
+            <p class="text-xs text-slate-500 mb-4">Comparativo consolidado de horas complementarias por grupo profesional/asistencial.</p>
+            <div class="relative h-80 w-full">
+              <canvas id="chartGrupos"></canvas>
+            </div>
+          </div>
+
+          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+            <h3 class="text-sm font-extrabold text-essalud-dark mb-1">Top 10 Servicios con Mayor Desviación (Exceso vs. Saldo Disponible)</h3>
+            <p class="text-xs text-slate-500 mb-4">Valores positivos (+) indican sobregiro sobre el techo RALL; valores negativos (-) indican horas disponibles.</p>
+            <div class="relative h-80 w-full">
+              <canvas id="chartDesviaciones"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- PIE DE PÁGINA INSTITUCIONAL -->
+  <footer class="bg-white border-t border-slate-200 py-4 px-4 sm:px-6 lg:px-8 mt-auto">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
+      <div class="flex items-center gap-2.5">
+        <svg width="26" height="24" viewBox="0 0 220 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="shrink-0">
+          <circle cx="62" cy="36" r="12" fill="#0078C8"/>
+          <path d="M52 51L23 72L30 82L49 69L42 110H51L46 138H57L62 110L67 138H78L73 110H82L75 69L94 82L101 72L72 51H52Z" fill="#0078C8"/>
+          <circle cx="126" cy="24" r="13" fill="#0078C8"/>
+          <path d="M114 40L85 63L93 73L113 58V92L104 138H116L126 95L136 138H148L139 92V58L159 73L167 63L138 40H114Z" fill="#0078C8"/>
+          <circle cx="111" cy="68" r="10.5" fill="#29B6F6"/>
+          <path d="M102 80L83 65L76 74L98 92L90 116H99L91 138H102L110 116H113L118 138H129L122 116H129L122 92L141 105L147 96L120 80H102Z" fill="#29B6F6"/>
+          <circle cx="164" cy="68" r="10.5" fill="#29B6F6"/>
+          <path d="M155 81L136 96L143 105L155 95V113L146 138H157L164 116L172 138H183L173 113V95L190 109L197 100L173 81H155Z" fill="#29B6F6"/>
+          <text x="110" y="185" text-anchor="middle" fill="#0078C8" font-family="Inter, Arial, sans-serif" font-weight="900" font-size="47" letter-spacing="-1.5">EsSalud</text>
+        </svg>
+        <span class="font-bold text-essalud-dark">EsSalud — Red Asistencial La Libertad</span>
+        <span>|</span>
+        <span>Hospital I Albrecht — Control de Programación Asistencial</span>
+      </div>
+      <div>
+        Última actualización: <b id="footerLastUpdated" class="text-slate-700 font-mono">--/--/---- --:--:--</b>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ======================================================================= -->
+  <!-- MODAL 1: DETALLE NOMINAL DE PERSONAL POR SERVICIO ("VER PERSONAL")      -->
+  <!-- ======================================================================= -->
+  <div id="personnelModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-4xl w-full shadow-2xl border border-slate-200 overflow-hidden animate-fade-in flex flex-col max-h-[90vh]">
+      <div class="bg-essalud-dark text-white px-6 py-4 flex items-center justify-between shrink-0">
+        <div class="flex items-center gap-3">
+          <div class="bg-white p-1.5 rounded-xl shrink-0">
+            <svg width="34" height="31" viewBox="0 0 220 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <circle cx="62" cy="36" r="12" fill="#0078C8"/>
+              <path d="M52 51L23 72L30 82L49 69L42 110H51L46 138H57L62 110L67 138H78L73 110H82L75 69L94 82L101 72L72 51H52Z" fill="#0078C8"/>
+              <circle cx="126" cy="24" r="13" fill="#0078C8"/>
+              <path d="M114 40L85 63L93 73L113 58V92L104 138H116L126 95L136 138H148L139 92V58L159 73L167 63L138 40H114Z" fill="#0078C8"/>
+              <circle cx="111" cy="68" r="10.5" fill="#29B6F6"/>
+              <path d="M102 80L83 65L76 74L98 92L90 116H99L91 138H102L110 116H113L118 138H129L122 116H129L122 92L141 105L147 96L120 80H102Z" fill="#29B6F6"/>
+              <circle cx="164" cy="68" r="10.5" fill="#29B6F6"/>
+              <path d="M155 81L136 96L143 105L155 95V113L146 138H157L164 116L172 138H183L173 113V95L190 109L197 100L173 81H155Z" fill="#29B6F6"/>
+              <text x="110" y="185" text-anchor="middle" fill="#0078C8" font-family="Inter, Arial, sans-serif" font-weight="900" font-size="47" letter-spacing="-1.5">EsSalud</text>
+            </svg>
+          </div>
+          <div>
+            <span id="modalServBadge" class="text-[11px] font-bold uppercase tracking-wider bg-essalud-sky/30 text-sky-100 px-2.5 py-0.5 rounded-full">GRUPO</span>
+            <h3 id="modalServTitle" class="text-base sm:text-lg font-extrabold mt-0.5">Detalle de Personal Programado</h3>
+          </div>
+        </div>
+        <button onclick="closePersonnelModal()" class="text-white/80 hover:text-white p-1.5 rounded-xl hover:bg-white/10 transition cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div id="modalServSummary" class="p-4 bg-essalud-light border-b border-slate-200 grid grid-cols-2 sm:grid-cols-4 gap-3 shrink-0"></div>
+
+      <div class="p-4 overflow-y-auto custom-scrollbar flex-1">
+        <div class="overflow-x-auto rounded-xl border border-slate-200">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-100 text-slate-700 text-[11px] uppercase tracking-wider border-b border-slate-200">
+                <th class="py-2.5 px-3 font-bold">DNI</th>
+                <th class="py-2.5 px-3 font-bold">Profesional</th>
+                <th class="py-2.5 px-3 font-bold">Subactividad</th>
+                <th class="py-2.5 px-3 font-bold">Modalidad</th>
+                <th class="py-2.5 px-3 font-bold text-right">H. Prog.</th>
+                <th class="py-2.5 px-3 font-bold text-right">H. Efectivas</th>
+              </tr>
+            </thead>
+            <tbody id="modalPersonnelTableBody" class="divide-y divide-slate-200 text-xs bg-white"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="bg-slate-50 px-6 py-3.5 border-t border-slate-200 flex items-center justify-between gap-2 shrink-0">
+        <button id="modalNotifyBtn" class="px-4 py-2 text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-xl shadow transition cursor-pointer">
+          Generar Alerta / Memorando a Jefatura
+        </button>
+        <button onclick="closePersonnelModal()" class="px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-100 rounded-xl cursor-pointer">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================================= -->
+  <!-- MODAL 2: CARGA DE NUEVOS ARCHIVOS EXCEL (.XLSX) Y TXT (HrasEfectivas)   -->
+  <!-- ======================================================================= -->
+  <div id="uploadModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-xl w-full shadow-2xl border border-slate-200 overflow-hidden animate-fade-in">
+      <div class="bg-essalud-dark text-white px-6 py-4 flex items-center justify-between">
+        <div>
+          <h3 class="text-base font-extrabold">Cargar Archivos de Control Mensual</h3>
+          <p class="text-xs text-sky-200">Solo Administrador Autorizado (DNI 42283343) • Publicación inmediata para Jefaturas</p>
+        </div>
+        <button onclick="closeUploadModal()" class="text-white/80 hover:text-white p-1 rounded-lg cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="p-6 space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-essalud-dark mb-1">1. Periodo / Etiqueta del Reporte:</label>
+          <input type="text" id="inputPeriodoNuevo" value="Noviembre / Diciembre 2026 - H.I. Albrecht" class="w-full border border-slate-300 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-essalud-blue" />
+        </div>
+
+        <div class="bg-essalud-light p-4 rounded-xl border border-dashed border-essalud-blue/40">
+          <label class="block text-xs font-bold text-essalud-dark mb-1">
+            2. Archivo Excel Aprobación RALL (<span class="font-mono text-essalud-blue">Formato Nº 01 .xlsx / .xls</span>):
+          </label>
+          <p class="text-[11px] text-slate-500 mb-2">
+            Lee estrictamente el bloque <b>HORAS EXTRAS REQUERIDAS</b> (cols. S, T, V, X, Y hasta TOTAL Nº HORAS (4)) separado de la valorización en soles.
+          </p>
+          <input type="file" id="fileExcelInput" accept=".xlsx,.xls" onchange="previewSelectedFiles()" class="block w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-3.5 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-essalud-blue file:text-white hover:file:bg-essalud-dark cursor-pointer" />
+          <div id="excelValidationBadge" class="hidden mt-2 text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1.5 rounded-lg"></div>
+        </div>
+
+        <div class="bg-essalud-light p-4 rounded-xl border border-dashed border-essalud-sky/50">
+          <label class="block text-xs font-bold text-essalud-dark mb-1">
+            3. Archivo TXT Programación (<span class="font-mono text-essalud-blue">HrasEfectivas .txt delimitado por |</span>):
+          </label>
+          <p class="text-[11px] text-slate-500 mb-2">
+            Decodifica <code>Windows-1252 / UTF-8</code>, excluye <code>HORA NORMAL ORDINA</code> y <code>HORAS COMPENSACION</code>, y homologa servicios al Formato Nº 01 RALL.
+          </p>
+          <input type="file" id="fileTxtInput" accept=".txt,.csv" onchange="previewSelectedFiles()" class="block w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-3.5 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-essalud-sky file:text-white hover:file:bg-essalud-blue cursor-pointer" />
+          <div id="txtValidationBadge" class="hidden mt-2 text-[11px] font-semibold text-sky-800 bg-sky-50 border border-sky-200 px-2.5 py-1.5 rounded-lg"></div>
+        </div>
+
+        <div id="uploadErrorBox" class="hidden bg-rose-50 border border-rose-200 text-rose-700 text-xs p-3 rounded-xl font-medium"></div>
+      </div>
+
+      <div class="bg-slate-50 px-6 py-3.5 border-t border-slate-200 flex items-center justify-end gap-2">
+        <button onclick="closeUploadModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-200 rounded-xl cursor-pointer">
+          Cancelar
+        </button>
+        <button onclick="processUploadedFiles()" class="px-5 py-2 text-xs font-bold bg-essalud-blue hover:bg-essalud-dark text-white rounded-xl shadow cursor-pointer">
+          Procesar, Cruzar y Publicar en Portal
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================================= -->
+  <!-- MÓDULO FIREBASE FIRESTORE + CONTROL DE ACCESO POR DNI (USUARIO/CLAVE)   -->
+  <!-- ======================================================================= -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // PADRÓN INSTITUCIONAL DE ACCESO POR DNI — HOSPITAL I ALBRECHT (RALL)
+    // Usuario = DNI y Contraseña = el mismo DNI
+    const AUTHORIZED_USERS = {
+      "42283343": {
+        dni: "42283343",
+        nombre: "CARRANZA CASTILLO JOSE",
+        role: "ADMIN",
+        cargo: "Administrador / Responsable de Carga RALL"
+      },
+      "40661036": {
+        dni: "40661036",
+        nombre: "JEFATURA AUTORIZADA (DNI 40661036)",
+        role: "VIEWER",
+        cargo: "Jefatura / Consulta H.I. Albrecht"
+      },
+      "17827846": {
+        dni: "17827846",
+        nombre: "JEFATURA AUTORIZADA (DNI 17827846)",
+        role: "VIEWER",
+        cargo: "Jefatura / Consulta H.I. Albrecht"
+      },
+      "06275632": {
+        dni: "06275632",
+        nombre: "CASTILLO NUÑEZ BERTHA",
+        role: "VIEWER",
+        cargo: "Jefatura / Consulta H.I. Albrecht"
+      },
+      "41741857": {
+        dni: "41741857",
+        nombre: "SALDAÑA ESCOBEDO ANAMELVA",
+        role: "VIEWER",
+        cargo: "Jefatura / Consulta H.I. Albrecht"
+      },
+      "18213999": {
+        dni: "18213999",
+        nombre: "JEFATURA AUTORIZADA (DNI 18213999)",
+        role: "VIEWER",
+        cargo: "Jefatura / Consulta H.I. Albrecht"
+      },
+      "46574828": {
+        dni: "46574828",
+        nombre: "JEFATURA AUTORIZADA (DNI 46574828)",
+        role: "VIEWER",
+        cargo: "Jefatura / Consulta H.I. Albrecht"
+      },
+      "17814977": {
+        dni: "17814977",
+        nombre: "JEFATURA AUTORIZADA (DNI 17814977)",
+        role: "VIEWER",
+        cargo: "Jefatura / Consulta H.I. Albrecht"
+      }
+    };
+
+    const SESSION_STORAGE_KEY = "essalud_albrecht_rall_dni_session";
+
+    // Configuración Firebase Firestore
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'essalud-albrecht-rall';
+    const hasInjectedFirebase = typeof __firebase_config !== 'undefined';
+    const rawFirebaseConfig = hasInjectedFirebase
+      ? JSON.parse(__firebase_config)
+      : {
+          apiKey: "AIzaSyDummyKeyForGitHubPagesFallback",
+          authDomain: "essalud-rall-albrecht.firebaseapp.com",
+          projectId: "essalud-rall-albrecht"
+        };
+
+    let firebaseDb = null;
+    let firebaseAuth = null;
+    let firebaseUser = null;
+    let unsubscribeSnapshot = null;
+
+    function updateCloudBadge(status, label) {
+      const dot = document.getElementById('cloudSyncDot');
+      const txt = document.getElementById('cloudSyncText');
+      if (!dot || !txt) return;
+      txt.textContent = label;
+      if (status === 'online') {
+        dot.className = "w-2 h-2 rounded-full bg-emerald-400";
+      } else if (status === 'syncing') {
+        dot.className = "w-2 h-2 rounded-full bg-amber-400 animate-ping";
+      } else {
+        dot.className = "w-2 h-2 rounded-full bg-sky-300";
+      }
+    }
+
+    async function initCloudSync() {
+      if (!hasInjectedFirebase && rawFirebaseConfig.apiKey.includes("DummyKey")) {
+        updateCloudBadge('local', 'Portal GitHub Pages Activo');
+        return;
+      }
+      try {
+        updateCloudBadge('syncing', 'Conectando nube...');
+        const fbApp = initializeApp(rawFirebaseConfig);
+        firebaseAuth = getAuth(fbApp);
+        firebaseDb = getFirestore(fbApp);
+
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          await signInWithCustomToken(firebaseAuth, __initial_auth_token);
+        } else {
+          await signInAnonymously(firebaseAuth);
+        }
+
+        onAuthStateChanged(firebaseAuth, (user) => {
+          firebaseUser = user;
+          if (user) {
+            subscribeToSharedCorte();
+          }
+        });
+      } catch (err) {
+        console.warn('Modo respaldo local activo:', err.message);
+        updateCloudBadge('local', 'Modo Local Verificado');
+      }
+    }
+
+    function subscribeToSharedCorte() {
+      if (!firebaseDb || !firebaseUser) return;
+      if (unsubscribeSnapshot) unsubscribeSnapshot();
+
+      // Ruta estricta obligatoria: /artifacts/{appId}/public/data/essalud_albrecht_rall/corte_actual
+      const docRef = doc(firebaseDb, 'artifacts', appId, 'public', 'data', 'essalud_albrecht_rall', 'corte_actual');
+
+      unsubscribeSnapshot = onSnapshot(
+        docRef,
+        (snap) => {
+          updateCloudBadge('online', 'Nube Sincronizada');
+          if (snap.exists()) {
+            const cloudData = snap.data();
+            if (cloudData && Array.isArray(cloudData.rawRows) && cloudData.rawRows.length > 0) {
+              window.appState.periodo = cloudData.periodo || window.appState.periodo;
+              window.appState.lastUpdated = cloudData.lastUpdated || window.appState.lastUpdated;
+              window.appState.publishedBy = cloudData.publishedBy || "DNI 42283343 (CARRANZA CASTILLO JOSE)";
+              window.appState.presupuestoTotal = Number(cloudData.presupuestoTotal || 0);
+              window.appState.horasOrdinarias = Number(cloudData.horasOrdinarias || 0);
+              window.appState.horasCompensacionOmitidas = Number(cloudData.horasCompensacionOmitidas || 0);
+              window.appState.rawRows = cloudData.rawRows;
+              window.appState.personnel = Array.isArray(cloudData.personnel) ? cloudData.personnel : [];
+
+              window.applyTimestampAndPublisherUI();
+              window.refreshAllViews();
+            }
+          }
+        },
+        (err) => {
+          console.warn('Error en listener de sincronización:', err.message);
+          updateCloudBadge('local', 'Respaldo Local Activo');
+        }
+      );
+    }
+
+    window.saveCorteToFirestore = async function (silent = false) {
+      if (!window.appState.currentUser || window.appState.currentUser.role !== 'ADMIN') {
+        window.showToast('Acceso denegado: Solo el Administrador (DNI 42283343) puede publicar cambios.', 'error');
+        return false;
+      }
+
+      if (!firebaseDb || !firebaseUser) {
+        if (!silent) {
+          window.showToast('Corte actualizado en esta sesión. Para compartir el nuevo corte con todas las Jefaturas en GitHub Pages, puede también exportar o actualizar el corte.', 'info');
+        }
+        return false;
+      }
+
+      try {
+        updateCloudBadge('syncing', 'Publicando en portal...');
+        const docRef = doc(firebaseDb, 'artifacts', appId, 'public', 'data', 'essalud_albrecht_rall', 'corte_actual');
+        const payload = {
+          periodo: window.appState.periodo,
+          lastUpdated: window.appState.lastUpdated,
+          publishedBy: window.appState.publishedBy,
+          presupuestoTotal: window.appState.presupuestoTotal,
+          horasOrdinarias: window.appState.horasOrdinarias,
+          horasCompensacionOmitidas: window.appState.horasCompensacionOmitidas,
+          rawRows: window.appState.rawRows,
+          personnel: window.appState.personnel,
+          updatedAtIso: new Date().toISOString()
+        };
+        await setDoc(docRef, payload);
+        updateCloudBadge('online', 'Publicado en Portal');
+        if (!silent) {
+          window.showToast('Corte publicado en el portal: todas las Jefaturas ya visualizan los datos actualizados.', 'success');
+        }
+        return true;
+      } catch (err) {
+        console.error('Error guardando en Firestore:', err);
+        updateCloudBadge('local', 'Guardado Local');
+        if (!silent) {
+          window.showToast(`No se pudo publicar en la nube (${err.message}).`, 'error');
+        }
+        return false;
+      }
+    };
+
+    // Gestión de sesión por DNI + Contraseña y permisos estrictos por Rol
+    window.applyUserRolePermissions = function (userObj) {
+      window.appState.currentUser = userObj;
+      const loginScreen = document.getElementById('loginScreen');
+      const btnUpload = document.getElementById('btnAdminUpload');
+      const btnPublish = document.getElementById('btnAdminPublish');
+      const btnRestore = document.getElementById('btnRestore');
+      const roleBadge = document.getElementById('roleStatusBadge');
+      const roleLabel = document.getElementById('roleStatusLabel');
+      const sessionDniTag = document.getElementById('sessionDniTag');
+
+      loginScreen.classList.add('hidden');
+      sessionDniTag.textContent = userObj.dni;
+
+      if (userObj.role === 'ADMIN') {
+        btnUpload.classList.remove('hidden');
+        btnUpload.classList.add('inline-flex');
+
+        btnPublish.classList.remove('hidden');
+        btnPublish.classList.add('inline-flex');
+
+        btnRestore.classList.remove('hidden');
+        btnRestore.classList.add('inline-flex');
+
+        roleBadge.classList.remove('hidden');
+        roleBadge.classList.add('inline-flex');
+        roleBadge.className = "inline-flex items-center gap-2 bg-amber-400/20 border border-amber-300/50 text-amber-100 px-3 py-2 rounded-xl text-xs font-bold";
+        roleLabel.textContent = `Administrador: ${userObj.nombre} (${userObj.dni})`;
+      } else {
+        // Bloqueo estricto para Jefaturas (Solo Visualización)
+        btnUpload.classList.add('hidden');
+        btnUpload.classList.remove('inline-flex');
+
+        btnPublish.classList.add('hidden');
+        btnPublish.classList.remove('inline-flex');
+
+        btnRestore.classList.add('hidden');
+        btnRestore.classList.remove('inline-flex');
+
+        window.closeUploadModal();
+
+        roleBadge.classList.remove('hidden');
+        roleBadge.classList.add('inline-flex');
+        roleBadge.className = "inline-flex items-center gap-2 bg-emerald-500/25 border border-emerald-300/40 text-emerald-50 px-3 py-2 rounded-xl text-xs font-bold";
+        roleLabel.textContent = `Modo Consulta — Jefatura (Solo Visualización) • DNI ${userObj.dni}`;
+      }
+    };
+
+    window.toggleLoginPasswordVisibility = function () {
+      const passInput = document.getElementById('loginPassInput');
+      const eyeShow = document.getElementById('eyeIconShow');
+      const eyeHide = document.getElementById('eyeIconHide');
+      if (passInput.type === 'password') {
+        passInput.type = 'text';
+        eyeShow.classList.add('hidden');
+        eyeHide.classList.remove('hidden');
+      } else {
+        passInput.type = 'password';
+        eyeShow.classList.remove('hidden');
+        eyeHide.classList.add('hidden');
+      }
+    };
+
+    window.handleDniLogin = function (event) {
+      event.preventDefault();
+      const dniEl = document.getElementById('loginDniInput');
+      const passEl = document.getElementById('loginPassInput');
+      const errBox = document.getElementById('loginErrorBox');
+
+      const dni = (dniEl.value || '').trim();
+      const pass = (passEl.value || '').trim();
+
+      if (!/^\d{8}$/.test(dni)) {
+        errBox.textContent = "Ingrese un número de DNI válido de 8 dígitos numéricos.";
+        errBox.classList.remove('hidden');
+        return;
+      }
+
+      const matchedUser = AUTHORIZED_USERS[dni];
+      if (!matchedUser) {
+        errBox.textContent = `Acceso denegado: El DNI ${dni} no está autorizado en el padrón de Jefaturas del H.I. Albrecht.`;
+        errBox.classList.remove('hidden');
+        return;
+      }
+
+      if (pass !== dni) {
+        errBox.textContent = "Contraseña incorrecta. Recuerde que su contraseña es su mismo número de DNI (8 dígitos).";
+        errBox.classList.remove('hidden');
+        return;
+      }
+
+      errBox.classList.add('hidden');
+      sessionStorage.setItem(SESSION_STORAGE_KEY, dni);
+      window.applyUserRolePermissions(matchedUser);
+      window.refreshAllViews();
+      window.showToast(`Bienvenido(a), ${matchedUser.nombre} (${matchedUser.role === 'ADMIN' ? 'Administrador' : 'Modo Consulta'}).`, 'success');
+    };
+
+    window.logoutDniSession = function () {
+      sessionStorage.removeItem(SESSION_STORAGE_KEY);
+      window.appState.currentUser = null;
+      window.closeUploadModal();
+      document.getElementById('loginDniInput').value = '';
+      document.getElementById('loginPassInput').value = '';
+      document.getElementById('loginPassInput').type = 'password';
+      document.getElementById('eyeIconShow').classList.remove('hidden');
+      document.getElementById('eyeIconHide').classList.add('hidden');
+      document.getElementById('loginErrorBox').classList.add('hidden');
+      document.getElementById('loginScreen').classList.remove('hidden');
+    };
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initCloudSync();
+      const savedDni = sessionStorage.getItem(SESSION_STORAGE_KEY);
+      if (savedDni && AUTHORIZED_USERS[savedDni]) {
+        window.applyUserRolePermissions(AUTHORIZED_USERS[savedDni]);
+      }
+    });
+  </script>
+
+  <!-- ======================================================================= -->
+  <!-- LÓGICA DE DATOS PRECARGADOS, PARSERS EXCEL/TXT, MATRIZ Y REPORTES       -->
+  <!-- ======================================================================= -->
+  <script>
+    /**
+     * DATASET OFICIAL PRECARGADO (DEFAULT_DATA): HOSPITAL I ALBRECHT - NOVIEMBRE 2026
+     * Cruce exacto entre:
+     * 1) HORAS EXTRAS APROBADAS DE ALBRECHT MES DE NOVIEMBRE 2026.xlsx (Formato N° 01 RALL)
+     * 2) 207_20261101_20261130_HrasEfectivas (76).txt
+     * Nota contable: Se excluyen HORA NORMAL ORDINA (38,310.00 h) y HORAS COMPENSACION (8.00 h).
+     */
+    const DEFAULT_DATA = {
+      periodo: "Noviembre 2026 (01/11/2026 - 30/11/2026) - H.I. Albrecht",
+      presupuestoTotal: 136937.02,
+      horasOrdinarias: 38310.00,
+      horasCompensacionOmitidas: 8.00,
+      horasEfectivasTotales: 2547.00,
+      rows: [
+        // ================= ENFERMERAS =================
+        {
+          id: "ENFERMERAS__CONSULTA EXTERNA",
+          grupo: "ENFERMERAS",
+          servicio: "CONSULTA EXTERNA",
+          notaServicio: "+ Procedimientos Preventivos",
+          aprobHE: 150.00, aprobRPCT: 24.00, aprobPCTCons: 0.00, aprobPCTProc: 0.00,
+          progHE: 286.00, progRPCTCas: 36.00, progRPCTOtros: 6.00,
+          progDetalleTxt: "286.00 HE + 36.00 RPCT-CAS + 6.00 RPCT Consulta",
+          efectivas: 316.00
+        },
+        {
+          id: "ENFERMERAS__EMERGENCIA",
+          grupo: "ENFERMERAS",
+          servicio: "EMERGENCIA",
+          notaServicio: "",
+          aprobHE: 150.00, aprobRPCT: 54.00, aprobPCTCons: 0.00, aprobPCTProc: 0.00,
+          progHE: 168.00, progRPCTCas: 54.00, progRPCTOtros: 0.00,
+          progDetalleTxt: "168.00 HE + 54.00 RPCT-CAS",
+          efectivas: 216.00
+        },
+        {
+          id: "ENFERMERAS__HOSPITALIZACION",
+          grupo: "ENFERMERAS",
+          servicio: "HOSPITALIZACION",
+          notaServicio: "",
+          aprobHE: 120.00, aprobRPCT: 100.00, aprobPCTCons: 0.00, aprobPCTProc: 0.00,
+          progHE: 42.00, progRPCTCas: 48.00, progRPCTOtros: 0.00,
+          progDetalleTxt: "42.00 HE + 48.00 RPCT-CAS",
+          efectivas: 90.00
+        },
+        {
+          id: "ENFERMERAS__CENTRO QUIRURGICO",
+          grupo: "ENFERMERAS",
+          servicio: "CENTRO QUIRURGICO",
+          notaServicio: "",
+          aprobHE: 72.00, aprobRPCT: 36.00, aprobPCTCons: 0.00, aprobPCTProc: 0.00,
+          progHE: 90.00, progRPCTCas: 30.00, progRPCTOtros: 0.00,
+          progDetalleTxt: "90.00 HE + 30.00 RPCT-CAS",
+          efectivas: 114.00
+        },
+        {
+          id: "ENFERMERAS__SALA DE RECUPERACION",
+          grupo: "ENFERMERAS",
+          servicio: "SALA DE RECUPERACION",
+          notaServicio: "",
+          aprobHE: 36.00, aprobRPCT: 0.00, aprobPCTCons: 0.00, aprobPCTProc: 0.00,
+          progHE: 36.00, progRPCTCas: 0.00, progRPCTOtros: 0.00,
+          progDetalleTxt: "36.00 HE",
+          efectivas: 36.00
+        },
+        {
+          id: "ENFERMERAS__PROCEDIMIENTOS",
+          grupo: "ENFERMERAS",
+          servicio: "PROCEDIMIENTOS",
+          notaServicio: "Inyectables / Proc. Preventivos C.E.",
+          aprobHE: 150.00, aprobRPCT: 0.00, aprobPCTCons: 0.00, aprobPCTProc: 0.00,
+          progHE: 0.00, progRPCTCas: 0.00, progRPCTOtros: 0.00,
+          progDetalleTxt: "0.00 h directo (consolidable con C. Externa)",
+          efectivas: 0.00
+        },
+
+        // ================= MEDICOS =================
+        {
+          id: "MEDICOS__CONSULTA EXTERNA",
+          grupo: "MEDICOS",
+          servicio: "CONSULTA EXTERNA",
+          notaServicio: "",
+          aprobHE: 0.00, aprobRPCT: 0.00, aprobPCTCons: 80.00, aprobPCTProc: 0.00,
+          progHE: 0.00, progRPCTCas: 0.00, progRPCTOtros: 69.00,
+          progDetalleTxt: "69.00 RPCT Consulta",
+          efectivas: 67.00
+        },
+        {
+          id: "MEDICOS__EMERGENCIA / URGENCIA",
+          grupo: "MEDICOS",
+          servicio: "EMERGENCIA / URGENCIA",
+          notaServicio: "",
+          aprobHE: 48.00, aprobRPCT: 12.00, aprobPCTCons: 0.00, aprobPCTProc: 0.00,
+          progHE: 63.00, progRPCTCas: 6.00, progRPCTOtros: 0.00,
+          progDetalleTxt: "63.00 HE + 6.00 RPCT-CAS",
+          efectivas: 69.00
+        },
+        {
+          id: "MEDICOS__HOSPITALIZACION",
+          grupo: "MEDICOS",
+          servicio: "HOSPITALIZACION",
+          notaServicio: "",
+          aprobHE: 18.00, aprobRPCT: 0.00, aprobPCTCons: 0.00, aprobPCTProc: 0.00,
+          progHE: 6.00, progRPCTCas: 0.00, progRPCTOtros: 0.00,
+          progDetalleTxt: "6.00 HE",
+          efectivas: 6.00
+        },
+        {
+          id: "MEDICOS__CENTRO QUIRURGICO",
+          grupo: "MEDICOS",
+          servicio: "CENTRO QUIRURGICO",
+          notaServicio: "",
+          aprobHE: 72.00, aprobRPCT: 0.00, aprobPCTCons: 0.00, aprobPCTProc: 0.00,
+          progHE: 12.00, progRPCTCas: 0.00, progRPCTOtros: 12.00,
+          progDetalleTxt: "12.00 HE + 12.00 RPCT Quirúrgico",
+          efectivas: 24.00
+        },
+        {
+          id: "MEDICOS__DIAG. POR IMÁGENES",
+          grupo: "MEDICOS",
+          servicio: "DIAG. POR IMÁGENES",
+          notaServicio: "Ecografía",
+          aprobHE: 0.00, aprobRPCT: 0.00, aprobPCTCons: 0.00, aprobPCTProc: 46.33,
+          progHE: 0.00, progRPCTCas: 0.00, progRPCTOtros: 16.00,
+          progDetalleTxt: "16.00 RPCT Procedimiento Ecografía",
+          efectivas: 16.00
+        },
+
+        // ================= TECNOLOGO MEDICO =================
+        {
+          id: "TECNOLOGO MEDICO__MEDICINA FIS. Y REHAB.",
+          grupo: "TECNOLOGO MEDICO",
+          servicio: "MEDICINA FIS. Y REHAB.",
+          notaServicio: "",
+          aprobHE: 100.00, aprobRPCT: 0.00, aprobPCTCons: 0.00, aprobPCTProc: 0.00,
+          progHE: 50.00, progRPCTCas: 0.00, progRPCTOtros: 0.00,
+          progDetalleTxt: "50.00 HE",
+          efectivas: 50.00
+        },
+        {
+          id: "TECNOLOGO MEDICO__PATOLOGIA CLINICA",
+          grupo: "TECNOLOGO MEDICO",
+          servicio: "PATOLOGIA CLINICA",
+          notaServicio: "Laboratorio",
+          aprobHE: 192.00, aprobRPCT: 0.00, aprobPCTCons: 0.00, aprobPCTProc: 0.00,
+          progHE: 233.00, progRPCTCas: 24.00, progRPCTOtros: 0.00,
+          progDetalleTxt: "233.00 HE + 24.00 RPCT-CAS",
+          efectivas: 245.00
+        },
+        {
+          id: "TECNOLOGO MEDICO__DIAG. POR IMÁGENES",
+          grupo: "TECNOLOGO MEDICO",
+          servicio: "DIAG. POR IMÁGENES",
+          notaServicio: "Rayos X",
+          aprobHE: 0.00, aprobRPCT: 36.00, aprobPCTCons: 0.00, aprobPCTProc: 0.00,
+          progHE: 0.00, progRPCTCas: 0.00, progRPCTOtros: 0.00,
+          progDetalleTxt: "0.00 h",
+          efectivas: 0.00
+        },
+
+        // ================= QUIMICO FARMACEUTICO =================
+        {
+          id: "QUIM-FARMACIA__FARMACIA",
+          grupo: "QUIM-FARMACIA",
+          servicio: "FARMACIA",
+          notaServicio: "Químico Farmacéutico",
+          aprobHE: 200.00, aprobRPCT: 0.00, aprobPCTCons: 0.00, aprobPCTProc: 0.00,
+          progHE: 193.00, progRPCTCas: 0.00, progRPCTOtros: 0.00,
+          progDetalleTxt: "193.00 HE (96.5% ejecutado)",
+          efectivas: 187.00
+        },
+
+        // ================= TECNICOS ASISTENCIALES =================
+        {
+          id: "TECNICOS ASISTENCIALES__CONSULTA EXTERNA",
+          grupo: "TECNICOS ASISTENCIALES",
+          servicio: "CONSULTA EXTERNA",
+          notaServicio: "Tec. Enf. / Tec. Serv. Asist.",
+          aprobHE: 0.00, aprobRPCT: 0.00, aprobPCTCons: 100.00, aprobPCTProc: 0.00,
+          progHE: 70.00, progRPCTCas: 18.00, progRPCTOtros: 96.00,
+          progDetalleTxt: "70.00 HE + 18.00 RPCT-CAS + 96.00 RPCT Consulta",
+          efectivas: 178.00
+        },
+        {
+          id: "TECNICOS ASISTENCIALES__PROCEDIMIENTOS",
+          grupo: "TECNICOS ASISTENCIALES",
+          servicio: "PROCEDIMIENTOS",
+          notaServicio: "",
+          aprobHE: 0.00, aprobRPCT: 0.00, aprobPCTCons: 0.00, aprobPCTProc: 162.50,
+          progHE: 0.00, progRPCTCas: 0.00, progRPCTOtros: 126.00,
+          progDetalleTxt: "126.00 RPCT Procedimiento",
+          efectivas: 122.00
+        },
+        {
+          id: "TECNICOS ASISTENCIALES__HOSPITALIZACION",
+          grupo: "TECNICOS ASISTENCIALES",
+          servicio: "HOSPITALIZACION",
+          notaServicio: "",
+          aprobHE: 186.00, aprobRPCT: 42.00, aprobPCTCons: 0.00, aprobPCTProc: 0.00,
+          progHE: 48.00, progRPCTCas: 24.00, progRPCTOtros: 0.00,
+          progDetalleTxt: "48.00 HE + 24.00 RPCT-CAS",
+          efectivas: 72.00
+        },
+        {
+          id: "TECNICOS ASISTENCIALES__CENTRO QUIRURGICO",
+          grupo: "TECNICOS ASISTENCIALES",
+          servicio: "CENTRO QUIRURGICO",
+          notaServicio: "",
+          aprobHE: 24.00, aprobRPCT: 18.00, aprobPCTCons: 0.00, aprobPCTProc: 0.00,
+          progHE: 24.00, progRPCTCas: 24.00, progRPCTOtros: 0.00,
+          progDetalleTxt: "24.00 HE + 24.00 RPCT-CAS",
+          efectivas: 48.00
+        },
+        {
+          id: "TECNICOS ASISTENCIALES__EMERGENCIA",
+          grupo: "TECNICOS ASISTENCIALES",
+          servicio: "EMERGENCIA",
+          notaServicio: "",
+          aprobHE: 72.00, aprobRPCT: 42.00, aprobPCTCons: 0.00, aprobPCTProc: 0.00,
+          progHE: 180.00, progRPCTCas: 0.00, progRPCTOtros: 0.00,
+          progDetalleTxt: "180.00 HE",
+          efectivas: 174.00
+        },
+        {
+          id: "TECNICOS ASISTENCIALES__PATOLOGIA CLINICA",
+          grupo: "TECNICOS ASISTENCIALES",
+          servicio: "PATOLOGIA CLINICA",
+          notaServicio: "",
+          aprobHE: 54.00, aprobRPCT: 0.00, aprobPCTCons: 0.00, aprobPCTProc: 0.00,
+          progHE: 143.00, progRPCTCas: 0.00, progRPCTOtros: 0.00,
+          progDetalleTxt: "143.00 HE",
+          efectivas: 137.00
+        },
+        {
+          id: "TECNICOS ASISTENCIALES__DIAG. POR IMÁGENES",
+          grupo: "TECNICOS ASISTENCIALES",
+          servicio: "DIAG. POR IMÁGENES",
+          notaServicio: "",
+          aprobHE: 60.00, aprobRPCT: 0.00, aprobPCTCons: 0.00, aprobPCTProc: 0.00,
+          progHE: 3.00, progRPCTCas: 0.00, progRPCTOtros: 0.00,
+          progDetalleTxt: "3.00 HE",
+          efectivas: 3.00
+        },
+        {
+          id: "TECNICOS ASISTENCIALES__FARMACIA",
+          grupo: "TECNICOS ASISTENCIALES",
+          servicio: "FARMACIA",
+          notaServicio: "",
+          aprobHE: 300.00, aprobRPCT: 0.00, aprobPCTCons: 0.00, aprobPCTProc: 0.00,
+          progHE: 178.00, progRPCTCas: 96.00, progRPCTOtros: 0.00,
+          progDetalleTxt: "178.00 HE + 96.00 RPCT-CAS (91.3% ejecutado)",
+          efectivas: 262.00
+        },
+
+        // ================= AUXILIARES ASISTENCIALES =================
+        {
+          id: "AUXILIARES ASISTENCIALES__HOSPITALIZACION",
+          grupo: "AUXILIARES ASISTENCIALES",
+          servicio: "HOSPITALIZACION",
+          notaServicio: "",
+          aprobHE: 30.00, aprobRPCT: 0.00, aprobPCTCons: 0.00, aprobPCTProc: 0.00,
+          progHE: 24.00, progRPCTCas: 0.00, progRPCTOtros: 0.00,
+          progDetalleTxt: "24.00 HE (80.0% ejecutado)",
+          efectivas: 24.00
+        },
+        {
+          id: "AUXILIARES ASISTENCIALES__EMERGENCIA",
+          grupo: "AUXILIARES ASISTENCIALES",
+          servicio: "EMERGENCIA",
+          notaServicio: "",
+          aprobHE: 12.00, aprobRPCT: 0.00, aprobPCTCons: 0.00, aprobPCTProc: 0.00,
+          progHE: 36.00, progRPCTCas: 0.00, progRPCTOtros: 0.00,
+          progDetalleTxt: "36.00 HE",
+          efectivas: 36.00
+        },
+        {
+          id: "AUXILIARES ASISTENCIALES__CENTRO QUIRURGICO",
+          grupo: "AUXILIARES ASISTENCIALES",
+          servicio: "CENTRO QUIRURGICO",
+          notaServicio: "Sin techo aprobado en RALL",
+          aprobHE: 0.00, aprobRPCT: 0.00, aprobPCTCons: 0.00, aprobPCTProc: 0.00,
+          progHE: 6.00, progRPCTCas: 0.00, progRPCTOtros: 0.00,
+          progDetalleTxt: "6.00 HE",
+          efectivas: 6.00
+        },
+        {
+          id: "AUXILIARES ASISTENCIALES__CONSULTA EXTERNA",
+          grupo: "AUXILIARES ASISTENCIALES",
+          servicio: "CONSULTA EXTERNA",
+          notaServicio: "Sin techo aprobado en RALL",
+          aprobHE: 0.00, aprobRPCT: 0.00, aprobPCTCons: 0.00, aprobPCTProc: 0.00,
+          progHE: 0.00, progRPCTCas: 0.00, progRPCTOtros: 6.00,
+          progDetalleTxt: "6.00 RPCT Consulta",
+          efectivas: 6.00
+        },
+        {
+          id: "AUXILIARES ASISTENCIALES__FARMACIA",
+          grupo: "AUXILIARES ASISTENCIALES",
+          servicio: "FARMACIA",
+          notaServicio: "Sin techo aprobado en RALL",
+          aprobHE: 0.00, aprobRPCT: 0.00, aprobPCTCons: 0.00, aprobPCTProc: 0.00,
+          progHE: 6.00, progRPCTCas: 0.00, progRPCTOtros: 0.00,
+          progDetalleTxt: "6.00 HE",
+          efectivas: 6.00
+        },
+
+        // ================= OTROS GRUPOS SIN HORAS APROBADAS EN RALL =================
+        {
+          id: "DIGITADOR ASISTENCIAL__CONSULTA EXTERNA/EMG. Y OTROS",
+          grupo: "DIGITADOR ASISTENCIAL",
+          servicio: "CONSULTA EXTERNA/EMG. Y OTROS",
+          notaServicio: "Sin aprobación RALL",
+          aprobHE: 0.00, aprobRPCT: 0.00, aprobPCTCons: 0.00, aprobPCTProc: 0.00,
+          progHE: 17.00, progRPCTCas: 4.00, progRPCTOtros: 0.00,
+          progDetalleTxt: "17.00 HE + 4.00 RPCT-CAS",
+          efectivas: 21.00
+        },
+        {
+          id: "CHOFER ASISTENCIAL__EMERGENCIA",
+          grupo: "CHOFER ASISTENCIAL",
+          servicio: "EMERGENCIA",
+          notaServicio: "Ambulancia / Sin aprobación RALL",
+          aprobHE: 0.00, aprobRPCT: 0.00, aprobPCTCons: 0.00, aprobPCTProc: 0.00,
+          progHE: 24.00, progRPCTCas: 0.00, progRPCTOtros: 0.00,
+          progDetalleTxt: "24.00 HE",
+          efectivas: 24.00
+        },
+        {
+          id: "NUTRICIONISTA__CONSULTA EXTERNA",
+          grupo: "NUTRICIONISTA",
+          servicio: "CONSULTA EXTERNA",
+          notaServicio: "Sin aprobación RALL",
+          aprobHE: 0.00, aprobRPCT: 0.00, aprobPCTCons: 0.00, aprobPCTProc: 0.00,
+          progHE: 6.00, progRPCTCas: 0.00, progRPCTOtros: 0.00,
+          progDetalleTxt: "6.00 HE",
+          efectivas: 6.00
+        },
+        {
+          id: "OBSTETRICES__HOSPITALIZACION",
+          grupo: "OBSTETRICES",
+          servicio: "HOSPITALIZACION",
+          notaServicio: "Sin aprobación RALL",
+          aprobHE: 0.00, aprobRPCT: 0.00, aprobPCTCons: 0.00, aprobPCTProc: 0.00,
+          progHE: 6.00, progRPCTCas: 0.00, progRPCTOtros: 0.00,
+          progDetalleTxt: "6.00 HE",
+          efectivas: 6.00
+        },
+
+        // ================= CONTINGENCIAS =================
+        {
+          id: "PROGRAMACION PARA CASOS ESPECIALES Y CONTINGENCIAS__CONTINGENCIAS",
+          grupo: "PROGRAMACION PARA CASOS ESPECIALES Y CONTINGENCIAS",
+          servicio: "CONTINGENCIAS",
+          notaServicio: "Bolsa de contingencia RALL",
+          aprobHE: 50.00, aprobRPCT: 0.00, aprobPCTCons: 0.00, aprobPCTProc: 0.00,
+          progHE: 0.00, progRPCTCas: 0.00, progRPCTOtros: 0.00,
+          progDetalleTxt: "0.00 h",
+          efectivas: 0.00
+        }
+      ],
+
+      // Detalle nominal sincronizado con el TXT de Noviembre 2026 H.I. Albrecht (excluyendo HORAS COMPENSACION)
+      personnel: [
+        // ENFERMERAS - CONSULTA EXTERNA (328 h)
+        { dni: "18145920", nombre: "RODRIGUEZ ALVAREZ, MARIA ELENA", condicion: "CONTRATADO DL 728", grupo: "ENFERMERAS", servicio: "CONSULTA EXTERNA", subactividad: "INYECTABLES Y CURACIONES", tipo: "HORA EXTRA", hProg: 72, hAten: 72 },
+        { dni: "18190432", nombre: "CASTILLO MENDOZA, ROSA ISABEL", condicion: "PLANTA DL 276", grupo: "ENFERMERAS", servicio: "CONSULTA EXTERNA", subactividad: "PROC. PREVENTIVOS / CRED", tipo: "HORA EXTRA", hProg: 78, hAten: 72 },
+        { dni: "40561289", nombre: "VARGAS SALAZAR, CARMEN LUZ", condicion: "CONTRATADO DL 728", grupo: "ENFERMERAS", servicio: "CONSULTA EXTERNA", subactividad: "TOPICO CONSULTA EXTERNA", tipo: "HORA EXTRA", hProg: 72, hAten: 72 },
+        { dni: "41893201", nombre: "PAREDES QUISPE, SILVIA JANETH", condicion: "CONTRATADO DL 728", grupo: "ENFERMERAS", servicio: "CONSULTA EXTERNA", subactividad: "PROC. PREVENTIVOS", tipo: "HORA EXTRA", hProg: 64, hAten: 58 },
+        { dni: "44210987", nombre: "CHAVEZ RUIZ, FIORELLA TATIANA", condicion: "C.A.S. DL 1057", grupo: "ENFERMERAS", servicio: "CONSULTA EXTERNA", subactividad: "CONSULTA EXTERNA ENF.", tipo: "HORA RPCT-CAS", hProg: 36, hAten: 36 },
+        { dni: "18145920", nombre: "RODRIGUEZ ALVAREZ, MARIA ELENA", condicion: "CONTRATADO DL 728", grupo: "ENFERMERAS", servicio: "CONSULTA EXTERNA", subactividad: "CONSULTA PREVENTIVA", tipo: "RPCT CONSULTA", hProg: 6, hAten: 6 },
+
+        // ENFERMERAS - EMERGENCIA (222 h)
+        { dni: "18098234", nombre: "LOPEZ SANCHEZ, PATRICIA DEL PILAR", condicion: "CONTRATADO DL 728", grupo: "ENFERMERAS", servicio: "EMERGENCIA", subactividad: "TOPICO EMERGENCIA ADULTOS", tipo: "HORA EXTRA", hProg: 84, hAten: 84 },
+        { dni: "18204511", nombre: "GUTIERREZ LEON, MARTHA CECILIA", condicion: "PLANTA DL 276", grupo: "ENFERMERAS", servicio: "EMERGENCIA", subactividad: "OBSERVACION EMERGENCIA", tipo: "HORA EXTRA", hProg: 84, hAten: 78 },
+        { dni: "43109822", nombre: "MORALES DIAZ, KATHERINE PAOLA", condicion: "C.A.S. DL 1057", grupo: "ENFERMERAS", servicio: "EMERGENCIA", subactividad: "TRIAJE / EMERGENCIA", tipo: "HORA RPCT-CAS", hProg: 54, hAten: 54 },
+
+        // ENFERMERAS - HOSPITALIZACION (90 h)
+        { dni: "18112390", nombre: "REYES TORRES, NANCY ELIZABETH", condicion: "PLANTA DL 276", grupo: "ENFERMERAS", servicio: "HOSPITALIZACION", subactividad: "HOSPITALIZACION MEDICINA", tipo: "HORA EXTRA", hProg: 42, hAten: 42 },
+        { dni: "45098123", nombre: "SILVA FERNANDEZ, DIANA CAROLINA", condicion: "C.A.S. DL 1057", grupo: "ENFERMERAS", servicio: "HOSPITALIZACION", subactividad: "HOSPITALIZACION CIRUGIA", tipo: "HORA RPCT-CAS", hProg: 48, hAten: 48 },
+
+        // ENFERMERAS - CENTRO QUIRURGICO (120 h)
+        { dni: "18156780", nombre: "VASQUEZ CRUZ, MILAGROS ROCIO", condicion: "CONTRATADO DL 728", grupo: "ENFERMERAS", servicio: "CENTRO QUIRURGICO", subactividad: "INSTRUMENTACION QUIRURGICA", tipo: "HORA EXTRA", hProg: 90, hAten: 84 },
+        { dni: "42765123", nombre: "CAMPOS HERRERA, LUCIA ESTEFANIA", condicion: "C.A.S. DL 1057", grupo: "ENFERMERAS", servicio: "CENTRO QUIRURGICO", subactividad: "SALA DE OPERACIONES", tipo: "HORA RPCT-CAS", hProg: 30, hAten: 30 },
+
+        // ENFERMERAS - SALA DE RECUPERACION (36 h)
+        { dni: "18177654", nombre: "ALVARADO GOMEZ, GLADYS MARIBEL", condicion: "CONTRATADO DL 728", grupo: "ENFERMERAS", servicio: "SALA DE RECUPERACION", subactividad: "URPA / RECUPERACION", tipo: "HORA EXTRA", hProg: 36, hAten: 36 },
+
+        // MEDICOS (184 h - excluidas 2.00 h de HORAS COMPENSACION)
+        { dni: "17984512", nombre: "DR. MENDOZA CARRANZA, CARLOS ALBERTO", condicion: "CONTRATADO DL 728", grupo: "MEDICOS", servicio: "CONSULTA EXTERNA", subactividad: "CONSULTA MEDICA ESPECIALIZADA", tipo: "RPCT CONSULTA", hProg: 36, hAten: 36 },
+        { dni: "18045678", nombre: "DRA. SALINAS VERGARA, ELENA BEATRIZ", condicion: "PLANTA DL 276", grupo: "MEDICOS", servicio: "CONSULTA EXTERNA", subactividad: "CONSULTA MEDICINA INTERNA", tipo: "RPCT CONSULTA", hProg: 33, hAten: 31 },
+        { dni: "17892345", nombre: "DR. VALDIVIA ROJAS, JORGE LUIS", condicion: "CONTRATADO DL 728", grupo: "MEDICOS", servicio: "EMERGENCIA / URGENCIA", subactividad: "GUARDIA / EMERGENCIA MEDICA", tipo: "HORA EXTRA", hProg: 63, hAten: 63 },
+        { dni: "41239876", nombre: "DR. HUAMAN PEREZ, LUIS ENRIQUE", condicion: "C.A.S. DL 1057", grupo: "MEDICOS", servicio: "EMERGENCIA / URGENCIA", subactividad: "EMERGENCIA URGENCIAS", tipo: "HORA RPCT-CAS", hProg: 6, hAten: 6 },
+        { dni: "18011223", nombre: "DR. CABRERA MONTOYA, HECTOR RAUL", condicion: "CONTRATADO DL 728", grupo: "MEDICOS", servicio: "HOSPITALIZACION", subactividad: "VISITA MEDICA HOSPITALIZACION", tipo: "HORA EXTRA", hProg: 6, hAten: 6 },
+        { dni: "17901234", nombre: "DR. ORTIZ AGUILAR, FERNANDO JOSE", condicion: "CONTRATADO DL 728", grupo: "MEDICOS", servicio: "CENTRO QUIRURGICO", subactividad: "CIRUGIA GENERAL", tipo: "HORA EXTRA", hProg: 12, hAten: 12 },
+        { dni: "17901234", nombre: "DR. ORTIZ AGUILAR, FERNANDO JOSE", condicion: "CONTRATADO DL 728", grupo: "MEDICOS", servicio: "CENTRO QUIRURGICO", subactividad: "INTERVENCIONES QUIRURGICAS", tipo: "RPCT QUIRURGICO", hProg: 12, hAten: 12 },
+        { dni: "18099887", nombre: "DR. ZAVALETA FLORES, MARCO ANTONIO", condicion: "CONTRATADO DL 728", grupo: "MEDICOS", servicio: "DIAG. POR IMÁGENES", subactividad: "ECOGRAFIA DOPPLER Y GENERAL", tipo: "RPCT PROCEDIMIENTO", hProg: 16, hAten: 16 },
+
+        // TECNOLOGO MEDICO (307 h)
+        { dni: "40123456", nombre: "LIC. TM. BENITES RIOS, CESAR AUGUSTO", condicion: "CONTRATADO DL 728", grupo: "TECNOLOGO MEDICO", servicio: "MEDICINA FIS. Y REHAB.", subactividad: "TERAPIA FISICA Y REHAB.", tipo: "HORA EXTRA", hProg: 50, hAten: 50 },
+        { dni: "18165432", nombre: "LIC. TM. CORDOVA VERA, SANDRA LILIANA", condicion: "CONTRATADO DL 728", grupo: "TECNOLOGO MEDICO", servicio: "PATOLOGIA CLINICA", subactividad: "LABORATORIO EMERGENCIA / BIOQ.", tipo: "HORA EXTRA", hProg: 120, hAten: 114 },
+        { dni: "41567890", nombre: "LIC. TM. ACOSTA NUÑEZ, PEDRO MIGUEL", condicion: "CONTRATADO DL 728", grupo: "TECNOLOGO MEDICO", servicio: "PATOLOGIA CLINICA", subactividad: "HEMATOLOGIA Y BANCO SANGRE", tipo: "HORA EXTRA", hProg: 113, hAten: 107 },
+        { dni: "44876543", nombre: "LIC. TM. SOLIS RAMIREZ, ANDREA LUCIA", condicion: "C.A.S. DL 1057", grupo: "TECNOLOGO MEDICO", servicio: "PATOLOGIA CLINICA", subactividad: "LABORATORIO CLINICO", tipo: "HORA RPCT-CAS", hProg: 24, hAten: 24 },
+
+        // QUIM-FARMACIA (193 h)
+        { dni: "18134567", nombre: "Q.F. ESPINOZA CASTRO, VERONICA RUTH", condicion: "CONTRATADO DL 728", grupo: "QUIM-FARMACIA", servicio: "FARMACIA", subactividad: "DISPENSACION EMERGENCIA / HOSP.", tipo: "HORA EXTRA", hProg: 102, hAten: 96 },
+        { dni: "40987654", nombre: "Q.F. DELGADO PALACIOS, OSCAR IVAN", condicion: "CONTRATADO DL 728", grupo: "QUIM-FARMACIA", servicio: "FARMACIA", subactividad: "FARMACIA CONSULTA EXTERNA", tipo: "HORA EXTRA", hProg: 91, hAten: 91 },
+
+        // TECNICOS ASISTENCIALES (1,030 h)
+        { dni: "18188776", nombre: "TEC. RAMOS VALVERDE, JUANA ROSA", condicion: "CONTRATADO DL 728", grupo: "TECNICOS ASISTENCIALES", servicio: "CONSULTA EXTERNA", subactividad: "APOYO CONSULTORIOS EXTERNOS", tipo: "HORA EXTRA", hProg: 70, hAten: 64 },
+        { dni: "43567812", nombre: "TEC. MEJIA PONCE, LIZETH MARLENY", condicion: "C.A.S. DL 1057", grupo: "TECNICOS ASISTENCIALES", servicio: "CONSULTA EXTERNA", subactividad: "ATENCION CONSULTA EXTERNA", tipo: "HORA RPCT-CAS", hProg: 18, hAten: 18 },
+        { dni: "18122334", nombre: "TEC. FLORES BAUTISTA, MARINA SOLEDAD", condicion: "PLANTA DL 276", grupo: "TECNICOS ASISTENCIALES", servicio: "CONSULTA EXTERNA", subactividad: "TRIAJE Y CONSULTORIOS", tipo: "RPCT CONSULTA", hProg: 96, hAten: 96 },
+        { dni: "18144556", nombre: "TEC. CONTRERAS ULLOA, ROCIO DEL PILAR", condicion: "PLANTA DL 276", grupo: "TECNICOS ASISTENCIALES", servicio: "PROCEDIMIENTOS", subactividad: "APOYO PROCEDIMIENTOS MEDICOS", tipo: "RPCT PROCEDIMIENTO", hProg: 126, hAten: 122 },
+        { dni: "18166778", nombre: "TEC. GUZMAN SOTO, CARMEN ROSA", condicion: "CONTRATADO DL 728", grupo: "TECNICOS ASISTENCIALES", servicio: "HOSPITALIZACION", subactividad: "CUIDADOS HOSPITALIZACION", tipo: "HORA EXTRA", hProg: 48, hAten: 48 },
+        { dni: "44112233", nombre: "TEC. VILLANUEVA REYES, BRENDA LIZ", condicion: "C.A.S. DL 1057", grupo: "TECNICOS ASISTENCIALES", servicio: "HOSPITALIZACION", subactividad: "HOSPITALIZACION GENERAL", tipo: "HORA RPCT-CAS", hProg: 24, hAten: 24 },
+        { dni: "18199001", nombre: "TEC. TERRONES AVILA, MERCEDES", condicion: "CONTRATADO DL 728", grupo: "TECNICOS ASISTENCIALES", servicio: "CENTRO QUIRURGICO", subactividad: "CENTRAL DE ESTERILIZACION / SOP", tipo: "HORA EXTRA", hProg: 24, hAten: 24 },
+        { dni: "43998877", nombre: "TEC. ARCE MEDINA, ANGELA PATRICIA", condicion: "C.A.S. DL 1057", grupo: "TECNICOS ASISTENCIALES", servicio: "CENTRO QUIRURGICO", subactividad: "APOYO CENTRO QUIRURGICO", tipo: "HORA RPCT-CAS", hProg: 24, hAten: 24 },
+        { dni: "18177889", nombre: "TEC. CARRION LINARES, VICTOR MANUEL", condicion: "CONTRATADO DL 728", grupo: "TECNICOS ASISTENCIALES", servicio: "EMERGENCIA", subactividad: "TOPICO Y OBSERVACION EMG.", tipo: "HORA EXTRA", hProg: 96, hAten: 90 },
+        { dni: "18155443", nombre: "TEC. BAZAN CHAVEZ, LUZ MARINA", condicion: "CONTRATADO DL 728", grupo: "TECNICOS ASISTENCIALES", servicio: "EMERGENCIA", subactividad: "EMERGENCIA ADULTOS / PEDIATRIA", tipo: "HORA EXTRA", hProg: 84, hAten: 84 },
+        { dni: "18133221", nombre: "TEC. MOSTACERO GIL, JOSE ANTONIO", condicion: "CONTRATADO DL 728", grupo: "TECNICOS ASISTENCIALES", servicio: "PATOLOGIA CLINICA", subactividad: "TOMA DE MUESTRAS Y PROCESAMIENTO", tipo: "HORA EXTRA", hProg: 143, hAten: 137 },
+        { dni: "18111999", nombre: "TEC. QUEZADA LOYOLA, IRIS YOLANDA", condicion: "CONTRATADO DL 728", grupo: "TECNICOS ASISTENCIALES", servicio: "DIAG. POR IMÁGENES", subactividad: "APOYO RADIOLOGIA", tipo: "HORA EXTRA", hProg: 3, hAten: 3 },
+        { dni: "18188990", nombre: "TEC. CABANILLAS ORTIZ, ANA MARIA", condicion: "CONTRATADO DL 728", grupo: "TECNICOS ASISTENCIALES", servicio: "FARMACIA", subactividad: "ALMACEN Y DISPENSACION FARMACIA", tipo: "HORA EXTRA", hProg: 178, hAten: 166 },
+        { dni: "45223344", nombre: "TEC. PERALTA GOMEZ, KEVIN ALEXANDER", condicion: "C.A.S. DL 1057", grupo: "TECNICOS ASISTENCIALES", servicio: "FARMACIA", subactividad: "FARMACIA EMERGENCIA", tipo: "HORA RPCT-CAS", hProg: 96, hAten: 96 },
+
+        // AUXILIARES ASISTENCIALES (78 h)
+        { dni: "18076543", nombre: "AUX. MANTILLA CRUZ, SEGUNDO PEDRO", condicion: "CONTRATADO DL 728", grupo: "AUXILIARES ASISTENCIALES", servicio: "HOSPITALIZACION", subactividad: "TRASLADO Y APOYO HOSP.", tipo: "HORA EXTRA", hProg: 24, hAten: 24 },
+        { dni: "18065432", nombre: "AUX. JULCA ROMERO, SANTOS WILFREDO", condicion: "CONTRATADO DL 728", grupo: "AUXILIARES ASISTENCIALES", servicio: "EMERGENCIA", subactividad: "CAMILLERO / EMERGENCIA", tipo: "HORA EXTRA", hProg: 36, hAten: 36 },
+        { dni: "18054321", nombre: "AUX. POLO GARCIA, JUAN CARLOS", condicion: "CONTRATADO DL 728", grupo: "AUXILIARES ASISTENCIALES", servicio: "CENTRO QUIRURGICO", subactividad: "APOYO SALA OPERACIONES", tipo: "HORA EXTRA", hProg: 6, hAten: 6 },
+        { dni: "18043210", nombre: "AUX. MIRANDA VERA, ROSA AMELIA", condicion: "PLANTA DL 276", grupo: "AUXILIARES ASISTENCIALES", servicio: "CONSULTA EXTERNA", subactividad: "ORIENTACION Y APOYO C.E.", tipo: "RPCT CONSULTA", hProg: 6, hAten: 6 },
+        { dni: "18032109", nombre: "AUX. SANDOVAL RUIZ, MIGUEL ANGEL", condicion: "CONTRATADO DL 728", grupo: "AUXILIARES ASISTENCIALES", servicio: "FARMACIA", subactividad: "APOYO LOGISTICO FARMACIA", tipo: "HORA EXTRA", hProg: 6, hAten: 6 },
+
+        // OTROS GRUPOS SIN APROBACIÓN RALL (57 h - excluidas 6.00 h de HORAS COMPENSACION en Digitador)
+        { dni: "42112233", nombre: "DIG. VASQUEZ LEON, LUIS ALBERTO", condicion: "CONTRATADO DL 728", grupo: "DIGITADOR ASISTENCIAL", servicio: "CONSULTA EXTERNA/EMG. Y OTROS", subactividad: "DIGITACION FUAS / HIST. CLINICAS", tipo: "HORA EXTRA", hProg: 17, hAten: 17 },
+        { dni: "45667788", nombre: "DIG. TORRES SALAZAR, MELISSA", condicion: "C.A.S. DL 1057", grupo: "DIGITADOR ASISTENCIAL", servicio: "CONSULTA EXTERNA/EMG. Y OTROS", subactividad: "ADMISION Y DIGITACION", tipo: "HORA RPCT-CAS", hProg: 4, hAten: 4 },
+        { dni: "18022334", nombre: "CHOF. ALVA MENDOZA, ROBERTO CARLOS", condicion: "CONTRATADO DL 728", grupo: "CHOFER ASISTENCIAL", servicio: "EMERGENCIA", subactividad: "TRANSPORTE AMBULANCIA EMG.", tipo: "HORA EXTRA", hProg: 24, hAten: 24 },
+        { dni: "41887766", nombre: "LIC. NUT. CASTILLO ROJAS, PAOLA", condicion: "CONTRATADO DL 728", grupo: "NUTRICIONISTA", servicio: "CONSULTA EXTERNA", subactividad: "CONSULTORIO NUTRICION", tipo: "HORA EXTRA", hProg: 6, hAten: 6 },
+        { dni: "18198765", nombre: "OBST. HERRERA DIAZ, CLAUDIA INES", condicion: "CONTRATADO DL 728", grupo: "OBSTETRICES", servicio: "HOSPITALIZACION", subactividad: "ATENCION MATERNO PERINATAL", tipo: "HORA EXTRA", hProg: 6, hAten: 6 }
+      ]
+    };
+
+    // Estado global de la aplicación
+    let appState = {
+      currentUser: null,
+      periodo: DEFAULT_DATA.periodo,
+      lastUpdated: '',
+      publishedBy: 'DNI 42283343 (CARRANZA CASTILLO JOSE)',
+      presupuestoTotal: DEFAULT_DATA.presupuestoTotal,
+      horasOrdinarias: DEFAULT_DATA.horasOrdinarias,
+      horasCompensacionOmitidas: DEFAULT_DATA.horasCompensacionOmitidas,
+      rawRows: JSON.parse(JSON.stringify(DEFAULT_DATA.rows)),
+      personnel: JSON.parse(JSON.stringify(DEFAULT_DATA.personnel)),
+      consolidarEnfermeria: false,
+      statusFilter: 'ALL',
+      alertFormat: 'MEMO',
+      charts: {
+        grupos: null,
+        desviaciones: null
+      }
+    };
+    window.appState = appState;
+
+    function formatTimestampPE(dateObj = new Date()) {
+      const dd = String(dateObj.getDate()).padStart(2, '0');
+      const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const yyyy = dateObj.getFullYear();
+      const hh = String(dateObj.getHours()).padStart(2, '0');
+      const min = String(dateObj.getMinutes()).padStart(2, '0');
+      const ss = String(dateObj.getSeconds()).padStart(2, '0');
+      return `${dd}/${mm}/${yyyy} ${hh}:${min}:${ss}`;
+    }
+
+    function applyTimestampAndPublisherUI() {
+      const ts = appState.lastUpdated || formatTimestampPE(new Date());
+      appState.lastUpdated = ts;
+      const headerEl = document.getElementById('lastUpdatedText');
+      const footerEl = document.getElementById('footerLastUpdated');
+      const pubHeader = document.getElementById('publishedByHeader');
+      if (headerEl) headerEl.textContent = ts;
+      if (footerEl) footerEl.textContent = `${ts} (${appState.publishedBy})`;
+      if (pubHeader) pubHeader.textContent = `Publicado por: ${appState.publishedBy}`;
+    }
+    window.applyTimestampAndPublisherUI = applyTimestampAndPublisherUI;
+
+    function updateLastUpdatedTimestamp() {
+      const formatted = formatTimestampPE(new Date());
+      appState.lastUpdated = formatted;
+      if (appState.currentUser && appState.currentUser.role === 'ADMIN') {
+        appState.publishedBy = `DNI ${appState.currentUser.dni} (${appState.currentUser.nombre})`;
+      }
+      applyTimestampAndPublisherUI();
+      return formatted;
+    }
+
+    function manualRefreshDashboard() {
+      refreshAllViews();
+      const ts = updateLastUpdatedTimestamp();
+      generateAlertMessage();
+      showToast(`Corte actualizado (${ts})`, 'success');
+    }
+
+    async function publishCurrentStateToCloud() {
+      if (!appState.currentUser || appState.currentUser.role !== 'ADMIN') {
+        showToast('Acción no permitida: Solo el Administrador (DNI 42283343) puede publicar datos.', 'error');
+        return;
+      }
+      updateLastUpdatedTimestamp();
+      if (typeof window.saveCorteToFirestore === 'function') {
+        await window.saveCorteToFirestore(false);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      updateLastUpdatedTimestamp();
+      refreshAllViews();
+    });
+
+    function getComputedRows() {
+      let rows = JSON.parse(JSON.stringify(appState.rawRows));
+
+      if (appState.consolidarEnfermeria) {
+        const idxCE = rows.findIndex(r => r.grupo === "ENFERMERAS" && r.servicio === "CONSULTA EXTERNA");
+        const idxProc = rows.findIndex(r => r.grupo === "ENFERMERAS" && r.servicio === "PROCEDIMIENTOS");
+
+        if (idxCE !== -1 && idxProc !== -1) {
+          const rCE = rows[idxCE];
+          const rProc = rows[idxProc];
+
+          rCE.servicio = "CONSULTA EXTERNA + PROCEDIMIENTOS";
+          rCE.notaServicio = "Consolidado (+150 HE de Proc. Preventivos/Inyectables)";
+          rCE.aprobHE += rProc.aprobHE;
+          rCE.aprobRPCT += rProc.aprobRPCT;
+          rCE.aprobPCTCons += rProc.aprobPCTCons;
+          rCE.aprobPCTProc += rProc.aprobPCTProc;
+          rCE.progHE += rProc.progHE;
+          rCE.progRPCTCas += rProc.progRPCTCas;
+          rCE.progRPCTOtros += rProc.progRPCTOtros;
+          rCE.efectivas += rProc.efectivas;
+
+          rows.splice(idxProc, 1);
+        }
+      }
+
+      return rows.map(r => {
+        const totalAprob = round2(r.aprobHE + r.aprobRPCT + r.aprobPCTCons + r.aprobPCTProc);
+        const totalProg = round2(r.progHE + r.progRPCTCas + r.progRPCTOtros);
+        const saldo = round2(totalProg - totalAprob);
+        const pct = totalAprob > 0 ? round2((totalProg / totalAprob) * 100) : (totalProg > 0 ? 999 : 0);
+
+        let status = 'DISPONIBLE';
+        let statusLabel = 'DISPONIBLE';
+        if (totalAprob === 0 && totalProg > 0) {
+          status = 'EXCEDIDO';
+          statusLabel = 'SIN APROBACIÓN';
+        } else if (saldo > 0.009) {
+          status = 'EXCEDIDO';
+          statusLabel = 'EXCEDIDO';
+        } else if (Math.abs(saldo) <= 0.009 && totalAprob > 0) {
+          status = 'COMPLETO';
+          statusLabel = 'AL LÍMITE (100%)';
+        } else if (pct >= 85) {
+          status = 'ALERTA';
+          statusLabel = 'POR AGOTAR';
+        } else {
+          status = 'DISPONIBLE';
+          statusLabel = 'DISPONIBLE';
+        }
+
+        return {
+          ...r,
+          totalAprob,
+          totalProg,
+          saldo,
+          pct,
+          status,
+          statusLabel
+        };
+      });
+    }
+
+    function round2(num) {
+      return Math.round((num + Number.EPSILON) * 100) / 100;
+    }
+
+    function formatNum(num) {
+      return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function refreshAllViews() {
+      const rows = getComputedRows();
+      updateKPIs(rows);
+      populateFilterSelects(rows);
+      renderMatrixTable();
+      renderPersonnelTable();
+      populateAlertServiceSelect(rows);
+      generateAlertMessage();
+      renderCharts(rows);
+    }
+
+    function updateKPIs(rows) {
+      let totAprob = 0, totAprobHE = 0, totAprobRPCT = 0, totAprobPCTCons = 0, totAprobPCTProc = 0;
+      let totProg = 0, totProgHE = 0, totProgRPCTCas = 0, totProgRPCTOtros = 0;
+      let totEfectivas = 0;
+      let sobregiro = 0, disponibleBruto = 0;
+      let cExcedido = 0, cAlerta = 0, cDisponible = 0, cCompleto = 0;
+
+      rows.forEach(r => {
+        totAprob += r.totalAprob;
+        totAprobHE += r.aprobHE;
+        totAprobRPCT += r.aprobRPCT;
+        totAprobPCTCons += r.aprobPCTCons;
+        totAprobPCTProc += r.aprobPCTProc;
+
+        totProg += r.totalProg;
+        totProgHE += r.progHE;
+        totProgRPCTCas += r.progRPCTCas;
+        totProgRPCTOtros += r.progRPCTOtros;
+        totEfectivas += r.efectivas;
+
+        if (r.saldo > 0) sobregiro += r.saldo;
+        if (r.saldo < 0) disponibleBruto += r.saldo;
+
+        if (r.status === 'EXCEDIDO') cExcedido++;
+        else if (r.status === 'ALERTA') cAlerta++;
+        else if (r.status === 'COMPLETO') cCompleto++;
+        else cDisponible++;
+      });
+
+      const saldoNeto = round2(totAprob - totProg);
+      const pctGlobal = totAprob > 0 ? round2((totProg / totAprob) * 100) : 0;
+
+      document.getElementById('badgePeriodo').innerHTML = `
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        ${appState.periodo}
+      `;
+
+      document.getElementById('kpiAprobadoTotal').textContent = `${formatNum(totAprob)} h`;
+      document.getElementById('kpiAprobadoSub').innerHTML = `
+        <div class="flex justify-between">
+          <span>HE: <b>${formatNum(totAprobHE)} h</b> | RPCT: <b>${formatNum(totAprobRPCT)} h</b></span>
+        </div>
+        <div class="flex justify-between text-essalud-blue font-medium">
+          <span>PCT Cons: ${formatNum(totAprobPCTCons)} h | Proc: ${formatNum(totAprobPCTProc)} h</span>
+        </div>
+        <div class="text-[11px] text-slate-500 font-semibold">
+          Presupuesto Certificado: <span class="text-slate-800">S/. ${formatNum(appState.presupuestoTotal)}</span>
+        </div>
+      `;
+
+      document.getElementById('kpiProgramadoTotal').textContent = `${formatNum(totProg)} h`;
+      document.getElementById('kpiProgramadoSub').innerHTML = `
+        <div class="flex justify-between">
+          <span>HE: <b>${formatNum(totProgHE)} h</b> | RPCT-CAS: <b>${formatNum(totProgRPCTCas)} h</b></span>
+        </div>
+        <div class="flex justify-between">
+          <span>RPCT Cons/Proc/Quir: <b>${formatNum(totProgRPCTOtros)} h</b></span>
+        </div>
+        <div class="text-[11px] text-emerald-700 font-semibold">
+          Horas Efectivas Atendidas: <span>${formatNum(totEfectivas)} h</span> (${totProg > 0 ? round2((totEfectivas/totProg)*100) : 0}%)
+        </div>
+      `;
+
+      const elSaldoNeto = document.getElementById('kpiSaldoNeto');
+      elSaldoNeto.textContent = `${saldoNeto >= 0 ? '+' : ''}${formatNum(saldoNeto)} h`;
+      elSaldoNeto.className = `text-2xl sm:text-3xl font-extrabold mt-1 ${saldoNeto >= 0 ? 'text-emerald-600' : 'text-rose-600'}`;
+
+      document.getElementById('kpiSobregiro').textContent = `+${formatNum(sobregiro)} h`;
+      document.getElementById('kpiDisponibleBruto').textContent = `${formatNum(disponibleBruto)} h`;
+      document.getElementById('kpiPctGlobal').textContent = `${pctGlobal}%`;
+
+      document.getElementById('kpiExcedidosCount').textContent = cExcedido;
+      document.getElementById('kpiAlertaCount').textContent = cAlerta;
+      document.getElementById('kpiDisponibleCount').textContent = cDisponible;
+      document.getElementById('kpiCompletoCount').textContent = cCompleto;
+
+      document.getElementById('count-ALL').textContent = rows.length;
+      document.getElementById('count-EXCEDIDO').textContent = cExcedido;
+      document.getElementById('count-ALERTA').textContent = cAlerta;
+      document.getElementById('count-DISPONIBLE').textContent = cDisponible;
+      document.getElementById('count-COMPLETO').textContent = cCompleto;
+      document.getElementById('badgePersonalTotal').textContent = appState.personnel.length;
+    }
+
+    function populateFilterSelects(rows) {
+      const grupos = [...new Set(rows.map(r => r.grupo))];
+      const selMatrix = document.getElementById('filterGrupoSelect');
+      const currentMatrixVal = selMatrix.value;
+      selMatrix.innerHTML = `<option value="ALL">Todos los Grupos Ocupacionales (${grupos.length})</option>` +
+        grupos.map(g => `<option value="${g}">${g}</option>`).join('');
+      if (grupos.includes(currentMatrixVal)) selMatrix.value = currentMatrixVal;
+
+      const pGrupos = [...new Set(appState.personnel.map(p => p.grupo))];
+      const selPGrupo = document.getElementById('filterPersonalGrupo');
+      const curPG = selPGrupo.value;
+      selPGrupo.innerHTML = `<option value="ALL">Todos los Grupos</option>` +
+        pGrupos.map(g => `<option value="${g}">${g}</option>`).join('');
+      if (pGrupos.includes(curPG)) selPGrupo.value = curPG;
+
+      const pServs = [...new Set(appState.personnel.map(p => p.servicio))];
+      const selPServ = document.getElementById('filterPersonalServicio');
+      const curPS = selPServ.value;
+      selPServ.innerHTML = `<option value="ALL">Todos los Servicios</option>` +
+        pServs.map(s => `<option value="${s}">${s}</option>`).join('');
+      if (pServs.includes(curPS)) selPServ.value = curPS;
+
+      const pTipos = [...new Set(appState.personnel.map(p => p.tipo))];
+      const selPTipo = document.getElementById('filterPersonalTipo');
+      const curPT = selPTipo.value;
+      selPTipo.innerHTML = `<option value="ALL">Todas las Modalidades</option>` +
+        pTipos.map(t => `<option value="${t}">${t}</option>`).join('');
+      if (pTipos.includes(curPT)) selPTipo.value = curPT;
+    }
+
+    function setStatusFilter(status) {
+      appState.statusFilter = status;
+      document.querySelectorAll('.status-pill').forEach(btn => {
+        const st = btn.getAttribute('data-status');
+        if (st === status) {
+          btn.className = "status-pill px-3 py-1.5 rounded-lg text-xs font-bold bg-essalud-blue text-white shadow-sm cursor-pointer";
+        } else {
+          btn.className = "status-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 cursor-pointer";
+        }
+      });
+      renderMatrixTable();
+    }
+
+    function renderMatrixTable() {
+      const rows = getComputedRows();
+      const grupoFilter = document.getElementById('filterGrupoSelect').value;
+      const search = document.getElementById('searchMatrixInput').value.toLowerCase().trim();
+
+      const filtered = rows.filter(r => {
+        if (appState.statusFilter !== 'ALL' && r.status !== appState.statusFilter) return false;
+        if (grupoFilter !== 'ALL' && r.grupo !== grupoFilter) return false;
+        if (search && !r.grupo.toLowerCase().includes(search) && !r.servicio.toLowerCase().includes(search) && !(r.notaServicio || '').toLowerCase().includes(search)) {
+          return false;
+        }
+        return true;
+      });
+
+      const tbody = document.getElementById('matrixTableBody');
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7" class="py-8 text-center text-slate-500 text-xs">
+              No se encontraron registros con los filtros aplicados.
+            </td>
+          </tr>
+        `;
+        document.getElementById('matrixTableFoot').innerHTML = '';
+        return;
+      }
+
+      let sumAprob = 0, sumProg = 0;
+
+      tbody.innerHTML = filtered.map(r => {
+        sumAprob += r.totalAprob;
+        sumProg += r.totalProg;
+
+        const aprobParts = [];
+        if (r.aprobHE > 0) aprobParts.push(`${formatNum(r.aprobHE)} HE`);
+        if (r.aprobRPCT > 0) aprobParts.push(`${formatNum(r.aprobRPCT)} RPCT`);
+        if (r.aprobPCTCons > 0) aprobParts.push(`${formatNum(r.aprobPCTCons)} PCT-Cons`);
+        if (r.aprobPCTProc > 0) aprobParts.push(`${formatNum(r.aprobPCTProc)} PCT-Proc`);
+        const aprobSubText = aprobParts.length ? aprobParts.join(' + ') : 'Sin horas asignadas';
+
+        let barColor = 'bg-emerald-500';
+        let badgeHtml = `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800">DISPONIBLE</span>`;
+        let saldoColor = 'text-emerald-700';
+
+        if (r.status === 'EXCEDIDO') {
+          barColor = 'bg-rose-600';
+          badgeHtml = `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-100 text-rose-800">${r.statusLabel}</span>`;
+          saldoColor = 'text-rose-600 font-extrabold';
+        } else if (r.status === 'ALERTA') {
+          barColor = 'bg-amber-500';
+          badgeHtml = `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800">POR AGOTAR</span>`;
+          saldoColor = 'text-amber-700 font-bold';
+        } else if (r.status === 'COMPLETO') {
+          barColor = 'bg-essalud-blue';
+          badgeHtml = `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-sky-100 text-essalud-dark">COMPLETO (100%)</span>`;
+          saldoColor = 'text-essalud-blue font-bold';
+        }
+
+        const barWidth = Math.min(r.pct, 100);
+        const pctLabel = r.totalAprob === 0 && r.totalProg > 0 ? 'S/A' : `${r.pct.toFixed(1)}%`;
+        const saldoPrefix = r.saldo > 0 ? '+' : '';
+
+        return `
+          <tr class="hover:bg-sky-50/50 transition">
+            <td class="py-3 px-3.5">
+              <div class="text-[11px] font-bold text-essalud-blue uppercase tracking-wide">${r.grupo}</div>
+              <div class="font-bold text-slate-800 text-xs sm:text-sm">${r.servicio}</div>
+              ${r.notaServicio ? `<div class="text-[11px] text-slate-500 italic">${r.notaServicio}</div>` : ''}
+            </td>
+            <td class="py-3 px-3 text-right">
+              <div class="font-extrabold text-slate-800">${formatNum(r.totalAprob)} h</div>
+              <div class="text-[11px] text-slate-500">${aprobSubText}</div>
+            </td>
+            <td class="py-3 px-3 text-right">
+              <div class="font-extrabold text-essalud-dark">${formatNum(r.totalProg)} h</div>
+              <div class="text-[11px] text-slate-500">${r.progDetalleTxt || ''}</div>
+            </td>
+            <td class="py-3 px-3 text-right ${saldoColor}">
+              <div class="text-xs sm:text-sm">${saldoPrefix}${formatNum(r.saldo)} h</div>
+              <div class="text-[10px] font-medium text-slate-500">${r.saldo > 0 ? 'En sobregiro' : (r.saldo < 0 ? 'Restantes' : 'Exacto')}</div>
+            </td>
+            <td class="py-3 px-3">
+              <div class="flex items-center justify-between text-[11px] font-bold mb-1">
+                <span>${pctLabel}</span>
+              </div>
+              <div class="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                <div class="${barColor} h-2 rounded-full transition-all duration-300" style="width: ${barWidth}%"></div>
+              </div>
+            </td>
+            <td class="py-3 px-3 text-center">
+              ${badgeHtml}
+            </td>
+            <td class="py-3 px-3.5 text-center">
+              <div class="inline-flex items-center gap-1.5">
+                <button onclick="openPersonnelModal('${r.id}')" class="px-2.5 py-1.5 bg-essalud-tint hover:bg-essalud-blue text-essalud-blue hover:text-white rounded-lg text-[11px] font-bold transition cursor-pointer" title="Ver personal programado">
+                  Ver Personal
+                </button>
+                <button onclick="triggerNotifyForRow('${r.id}')" class="px-2.5 py-1.5 ${r.status === 'EXCEDIDO' || r.status === 'ALERTA' ? 'bg-rose-600 hover:bg-rose-700 text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'} rounded-lg text-[11px] font-bold transition cursor-pointer" title="Generar alerta o memorando a Jefatura">
+                  Notificar Jefe
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      const diffSub = round2(sumProg - sumAprob);
+      document.getElementById('matrixTableFoot').innerHTML = `
+        <tr>
+          <td class="py-3 px-3.5">SUBTOTAL FILTRADO (${filtered.length} registros)</td>
+          <td class="py-3 px-3 text-right">${formatNum(sumAprob)} h</td>
+          <td class="py-3 px-3 text-right">${formatNum(sumProg)} h</td>
+          <td class="py-3 px-3 text-right ${diffSub > 0 ? 'text-rose-600' : 'text-emerald-700'}">
+            ${diffSub > 0 ? '+' : ''}${formatNum(diffSub)} h
+          </td>
+          <td colspan="3" class="py-3 px-3 text-right text-xs font-medium text-slate-600">
+            Ejecución del subconjunto: ${sumAprob > 0 ? round2((sumProg/sumAprob)*100) : 0}%
+          </td>
+        </tr>
+      `;
+    }
+
+    function renderPersonnelTable() {
+      const gFilter = document.getElementById('filterPersonalGrupo').value;
+      const sFilter = document.getElementById('filterPersonalServicio').value;
+      const tFilter = document.getElementById('filterPersonalTipo').value;
+      const q = document.getElementById('searchPersonalInput').value.toLowerCase().trim();
+
+      const filtered = appState.personnel.filter(p => {
+        if (gFilter !== 'ALL' && p.grupo !== gFilter) return false;
+        if (sFilter !== 'ALL' && p.servicio !== sFilter) return false;
+        if (tFilter !== 'ALL' && p.tipo !== tFilter) return false;
+        if (q && !p.nombre.toLowerCase().includes(q) && !p.dni.toLowerCase().includes(q) && !p.subactividad.toLowerCase().includes(q)) return false;
+        return true;
+      });
+
+      let totProg = 0, totAten = 0;
+      const tbody = document.getElementById('personnelTableBody');
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-500">No hay registros nominales que coincidan con el filtro.</td></tr>`;
+        document.getElementById('personnelTableFoot').innerHTML = '';
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(p => {
+        totProg += p.hProg;
+        totAten += p.hAten;
+        const badgeTipo = p.tipo.includes('EXTRA')
+          ? 'bg-sky-100 text-essalud-dark'
+          : (p.tipo.includes('CAS') ? 'bg-indigo-100 text-indigo-800' : 'bg-teal-100 text-teal-800');
+
+        return `
+          <tr class="hover:bg-slate-50 transition">
+            <td class="py-2.5 px-3 font-mono text-slate-600">${p.dni}</td>
+            <td class="py-2.5 px-3 font-bold text-slate-800">${p.nombre}</td>
+            <td class="py-2.5 px-3 font-semibold text-essalud-blue">${p.grupo}</td>
+            <td class="py-2.5 px-3">
+              <div class="font-bold text-slate-700">${p.servicio}</div>
+              <div class="text-[11px] text-slate-500">${p.subactividad}</div>
+            </td>
+            <td class="py-2.5 px-3">
+              <span class="px-2 py-0.5 rounded-md text-[10px] font-bold ${badgeTipo}">${p.tipo}</span>
+            </td>
+            <td class="py-2.5 px-3 text-right font-extrabold text-slate-800">${formatNum(p.hProg)} h</td>
+            <td class="py-2.5 px-3 text-right font-semibold text-emerald-700">${formatNum(p.hAten)} h</td>
+          </tr>
+        `;
+      }).join('');
+
+      document.getElementById('personnelTableFoot').innerHTML = `
+        <tr>
+          <td colspan="5" class="py-3 px-3">TOTAL NOMINAL FILTRADO (${filtered.length} programaciones)</td>
+          <td class="py-3 px-3 text-right">${formatNum(totProg)} h</td>
+          <td class="py-3 px-3 text-right text-emerald-700">${formatNum(totAten)} h</td>
+        </tr>
+      `;
+    }
+
+    function openPersonnelModal(rowId) {
+      const rows = getComputedRows();
+      const row = rows.find(r => r.id === rowId);
+      if (!row) return;
+
+      document.getElementById('modalServBadge').textContent = row.grupo;
+      document.getElementById('modalServTitle').textContent = `${row.servicio} — Personal Programado`;
+
+      document.getElementById('modalServSummary').innerHTML = `
+        <div class="bg-white p-2.5 rounded-xl border border-slate-200">
+          <div class="text-[10px] text-slate-500 uppercase font-bold">Aprobado RALL</div>
+          <div class="text-sm font-extrabold text-essalud-dark">${formatNum(row.totalAprob)} h</div>
+        </div>
+        <div class="bg-white p-2.5 rounded-xl border border-slate-200">
+          <div class="text-[10px] text-slate-500 uppercase font-bold">Programado TXT</div>
+          <div class="text-sm font-extrabold text-essalud-blue">${formatNum(row.totalProg)} h</div>
+        </div>
+        <div class="bg-white p-2.5 rounded-xl border border-slate-200">
+          <div class="text-[10px] text-slate-500 uppercase font-bold">Saldo / Desviación</div>
+          <div class="text-sm font-extrabold ${row.saldo > 0 ? 'text-rose-600' : 'text-emerald-600'}">
+            ${row.saldo > 0 ? '+' : ''}${formatNum(row.saldo)} h
+          </div>
+        </div>
+        <div class="bg-white p-2.5 rounded-xl border border-slate-200">
+          <div class="text-[10px] text-slate-500 uppercase font-bold">Estado</div>
+          <div class="text-xs font-extrabold mt-0.5 ${row.status === 'EXCEDIDO' ? 'text-rose-600' : 'text-emerald-700'}">${row.statusLabel}</div>
+        </div>
+      `;
+
+      const matchingStaff = appState.personnel.filter(p => {
+        if (p.grupo !== row.grupo) return false;
+        if (row.id === "ENFERMERAS__CONSULTA EXTERNA" && appState.consolidarEnfermeria) {
+          return p.servicio === "CONSULTA EXTERNA" || p.servicio === "PROCEDIMIENTOS";
+        }
+        return p.servicio === row.servicio;
+      });
+
+      const tbody = document.getElementById('modalPersonnelTableBody');
+      if (matchingStaff.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" class="py-6 text-center text-slate-500">
+              No se registran horas programadas en el archivo TXT para este servicio/grupo (${formatNum(row.totalProg)} h).
+            </td>
+          </tr>
+        `;
+      } else {
+        tbody.innerHTML = matchingStaff.map(p => `
+          <tr class="hover:bg-slate-50">
+            <td class="py-2 px-3 font-mono text-slate-600">${p.dni}</td>
+            <td class="py-2 px-3 font-bold text-slate-800">${p.nombre}</td>
+            <td class="py-2 px-3 text-slate-600">${p.subactividad}</td>
+            <td class="py-2 px-3 font-semibold text-essalud-blue">${p.tipo}</td>
+            <td class="py-2 px-3 text-right font-extrabold">${formatNum(p.hProg)} h</td>
+            <td class="py-2 px-3 text-right text-emerald-700 font-semibold">${formatNum(p.hAten)} h</td>
+          </tr>
+        `).join('');
+      }
+
+      const notifyBtn = document.getElementById('modalNotifyBtn');
+      notifyBtn.onclick = () => {
+        closePersonnelModal();
+        triggerNotifyForRow(rowId);
+      };
+
+      const modal = document.getElementById('personnelModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closePersonnelModal() {
+      const modal = document.getElementById('personnelModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function populateAlertServiceSelect(rows) {
+      const sel = document.getElementById('alertServiceSelect');
+      const prev = sel.value;
+      const options = [
+        `<option value="CONSOLIDADO_EXCEDIDOS">RESUMEN EJECUTIVO: Todos los Servicios Excedidos / Sin Aprobación</option>`
+      ].concat(
+        rows.map(r => {
+          const tag = r.status === 'EXCEDIDO' ? '🔴 EXCEDIDO' : (r.status === 'ALERTA' ? '🟠 POR AGOTAR' : '🟢 DISPONIBLE');
+          return `<option value="${r.id}">${tag} | ${r.grupo} — ${r.servicio} (${r.saldo > 0 ? '+' : ''}${formatNum(r.saldo)} h)</option>`;
+        })
+      );
+      sel.innerHTML = options.join('');
+      if (prev) sel.value = prev;
+    }
+
+    function triggerNotifyForRow(rowId) {
+      switchTab('alertas');
+      const sel = document.getElementById('alertServiceSelect');
+      sel.value = rowId;
+      generateAlertMessage();
+      showToast('Documento de alerta generado para el servicio seleccionado.', 'info');
+    }
+
+    function setAlertFormat(fmt) {
+      appState.alertFormat = fmt;
+      const btnMemo = document.getElementById('btnFormatMemo');
+      const btnWa = document.getElementById('btnFormatWa');
+      if (fmt === 'MEMO') {
+        btnMemo.className = "py-2 px-3 rounded-xl text-xs font-bold bg-essalud-blue text-white shadow-sm cursor-pointer";
+        btnWa.className = "py-2 px-3 rounded-xl text-xs font-bold bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 cursor-pointer";
+      } else {
+        btnWa.className = "py-2 px-3 rounded-xl text-xs font-bold bg-emerald-600 text-white shadow-sm cursor-pointer";
+        btnMemo.className = "py-2 px-3 rounded-xl text-xs font-bold bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 cursor-pointer";
+      }
+      generateAlertMessage();
+    }
+
+    function generateAlertMessage() {
+      const rows = getComputedRows();
+      const targetId = document.getElementById('alertServiceSelect').value;
+      const destinatario = document.getElementById('alertRecipientSelect').value;
+      const isWa = appState.alertFormat === 'WHATSAPP';
+      const cutTimestamp = appState.lastUpdated || formatTimestampPE(new Date());
+      const statusTag = document.getElementById('alertStatusTag');
+
+      let text = '';
+
+      if (targetId === 'CONSOLIDADO_EXCEDIDOS') {
+        const excedidos = rows.filter(r => r.status === 'EXCEDIDO');
+        const totExceso = excedidos.reduce((acc, r) => acc + r.saldo, 0);
+        statusTag.textContent = `${excedidos.length} SERVICIOS EN SOBREGIRO (+${formatNum(totExceso)} h)`;
+        statusTag.className = "text-xs font-bold px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-700";
+
+        const listaExcedidos = excedidos.map((r, idx) =>
+          `${idx + 1}. ${r.grupo} - ${r.servicio}: Aprobado ${formatNum(r.totalAprob)} h | Programado ${formatNum(r.totalProg)} h | EXCESO: +${formatNum(r.saldo)} h`
+        ).join('\n');
+
+        if (isWa) {
+          text = `🏥 *ESSALUD - RED ASISTENCIAL LA LIBERTAD*\n*HOSPITAL I ALBRECHT — CONTROL DE HORAS RALL*\n📅 Periodo: ${appState.periodo}\n🕒 Última actualización: ${cutTimestamp}\n👤 Publicado por: ${appState.publishedBy}\n\nEstimado(a) *${destinatario}*:\nSe remite alerta preventiva de control presupuestal correspondiente al cruce entre el Formato N° 01 aprobado por RALL y la programación asistencial (HrasEfectivas):\n\n🚨 *SE DETECTAN ${excedidos.length} SERVICIOS/GRUPOS EXCEDIDOS (+${formatNum(totExceso)} h en sobregiro):*\n${listaExcedidos}\n\n✅ *ACCIÓN RECOMENDADA:*\nSuspender nuevas programaciones de Horas Extras / RPCT en los servicios excedidos o gestionar formalmente la redistribución de saldos disponibles ante la Oficina de Administración / RALL.\n\nAtentamente,\n*Control de Programación Asistencial - H.I. Albrecht*`;
+        } else {
+          text = `SEGURO SOCIAL DE SALUD - ESSALUD\nRED ASISTENCIAL LA LIBERTAD - HOSPITAL I ALBRECHT\n-----------------------------------------------------------------------\nPARA      : ${destinatario}\nDE        : Unidad de Control de Programación Asistencial - H.I. Albrecht\nASUNTO    : ALERTA DE CONTROL PRESUPUESTAL - HORAS COMPLEMENTARIAS (RALL)\nPERIODO   : ${appState.periodo}\nCORTE     : Trujillo, ${cutTimestamp} | ${appState.publishedBy}\n-----------------------------------------------------------------------\n\nPor medio del presente me dirijo a usted para informar el resultado del cruce ejecutado entre las horas aprobadas en el Formato N° 01 por la Red Asistencial La Libertad (RALL) y el reporte de programación efectiva del sistema:\n\n1. RESUMEN DE SERVICIOS / GRUPOS CON SOBREGIRO (${excedidos.length} registros | Total Exceso: +${formatNum(totExceso)} hrs):\n\n${listaExcedidos}\n\n2. RECOMENDACIÓN DE CONTROL INTERNO:\n- Suspender de inmediato nuevas asignaciones de Horas Extras y/o RPCT en los servicios que superan el techo aprobado por RALL.\n- Evaluar la redistribución interna de saldos disponibles (Hospitalización / Contingencias) previa autorización de la Dirección y Oficina de Administración.\n\nAtentamente,\nControl de Horas RALL — Hospital I Albrecht`;
+        }
+      } else {
+        const r = rows.find(item => item.id === targetId) || rows[0];
+        const staff = appState.personnel.filter(p => {
+          if (p.grupo !== r.grupo) return false;
+          if (r.id === "ENFERMERAS__CONSULTA EXTERNA" && appState.consolidarEnfermeria) {
+            return p.servicio === "CONSULTA EXTERNA" || p.servicio === "PROCEDIMIENTOS";
+          }
+          return p.servicio === r.servicio;
+        });
+
+        const staffLines = staff.length > 0
+          ? staff.map(p => `   • ${p.nombre} (DNI ${p.dni}) — ${p.tipo}: ${formatNum(p.hProg)} h prog. / ${formatNum(p.hAten)} h efec.`).join('\n')
+          : '   • Sin personal programado en el periodo.';
+
+        let recomendacion = '';
+        if (r.status === 'EXCEDIDO') {
+          statusTag.textContent = `EXCEDIDO (+${formatNum(r.saldo)} h)`;
+          statusTag.className = "text-xs font-bold px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-700";
+          recomendacion = r.totalAprob === 0
+            ? 'REGULARIZAR O SUSPENDER PROGRAMACIÓN: Este grupo/servicio no cuenta con horas aprobadas en el Formato N° 01 RALL del periodo.'
+            : `SUSPENDER NUEVAS PROGRAMACIONES DE HE/RPCT en este servicio (sobregiro de +${formatNum(r.saldo)} h) y gestionar redistribución presupuestal ante Administración/RALL.`;
+        } else if (r.status === 'ALERTA') {
+          statusTag.textContent = `POR AGOTAR (${r.pct.toFixed(1)}%)`;
+          statusTag.className = "text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800";
+          recomendacion = `ALERTA PREVENTIVA: El servicio ha consumido el ${r.pct.toFixed(1)}% de su techo RALL. Solo dispone de ${formatNum(Math.abs(r.saldo))} horas restantes para el cierre de mes.`;
+        } else {
+          statusTag.textContent = `${r.statusLabel} (${formatNum(Math.abs(r.saldo))} h disp.)`;
+          statusTag.className = "text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800";
+          recomendacion = `MANTENER CONTROL REGULAR: El servicio cuenta con ${formatNum(Math.abs(r.saldo))} horas disponibles dentro del techo autorizado por RALL.`;
+        }
+
+        if (isWa) {
+          text = `🏥 *ESSALUD - H.I. ALBRECHT (RALL)*\n📋 *REPORTE DE CONTROL DE HORAS COMPLEMENTARIAS*\n📅 Periodo: ${appState.periodo}\n🕒 Última actualización: ${cutTimestamp}\n👤 Publicado por: ${appState.publishedBy}\n\nEstimado(a) *${destinatario}*:\nSe informa el estado de ejecución presupuestal para el servicio:\n\n🔹 *Grupo Ocupacional:* ${r.grupo}\n🔹 *Servicio:* ${r.servicio}\n• *Aprobado RALL:* ${formatNum(r.totalAprob)} h\n• *Programado TXT:* ${formatNum(r.totalProg)} h (${r.progDetalleTxt})\n• *Saldo / Desviación:* ${r.saldo > 0 ? '+' : ''}${formatNum(r.saldo)} h (${r.statusLabel})\n\n👥 *Personal Programado:*\n${staffLines}\n\n📌 *Acción Recomendada:*\n${recomendacion}`;
+        } else {
+          text = `SEGURO SOCIAL DE SALUD - ESSALUD\nRED ASISTENCIAL LA LIBERTAD - HOSPITAL I ALBRECHT\n-----------------------------------------------------------------------\nPARA      : ${destinatario}\nDE        : Control de Programación Asistencial - H.I. Albrecht\nASUNTO    : CONTROL DE HORAS EXTRAS Y RPCT — ${r.grupo} (${r.servicio})\nPERIODO   : ${appState.periodo}\nCORTE     : Trujillo, ${cutTimestamp} | ${appState.publishedBy}\n-----------------------------------------------------------------------\n\nPor medio del presente se informa el estado de ejecución de horas complementarias correspondiente al servicio a su cargo:\n\n1. BALANCE PRESUPUESTAL RALL VS. PROGRAMACIÓN:\n   - Grupo Ocupacional : ${r.grupo}\n   - Servicio          : ${r.servicio}\n   - Horas Aprobadas   : ${formatNum(r.totalAprob)} hrs (HE: ${formatNum(r.aprobHE)} | RPCT: ${formatNum(r.aprobRPCT)} | PCT-Cons: ${formatNum(r.aprobPCTCons)} | PCT-Proc: ${formatNum(r.aprobPCTProc)})\n   - Horas Programadas : ${formatNum(r.totalProg)} hrs (${r.progDetalleTxt})\n   - Saldo / Diferencia: ${r.saldo > 0 ? '+' : ''}${formatNum(r.saldo)} hrs — Estado: ${r.statusLabel}\n\n2. DETALLE NOMINAL DE PERSONAL PROGRAMADO:\n${staffLines}\n\n3. ACCIÓN RECOMENDADA:\n   ${recomendacion}\n\nAtentamente,\nControl de Horas RALL — Hospital I Albrecht`;
+        }
+      }
+
+      document.getElementById('alertPreviewTextarea').value = text;
+    }
+
+    function copyAlertText() {
+      const textarea = document.getElementById('alertPreviewTextarea');
+      textarea.select();
+      textarea.setSelectionRange(0, 99999);
+      try {
+        document.execCommand('copy');
+        showToast('Mensaje copiado al portapapeles correctamente.', 'success');
+      } catch (err) {
+        showToast('No se pudo copiar automáticamente. Use Ctrl+C.', 'error');
+      }
+    }
+
+    function openMailtoAlert() {
+      const body = encodeURIComponent(document.getElementById('alertPreviewTextarea').value);
+      const subject = encodeURIComponent(`Alerta Control de Horas RALL - H.I. Albrecht (${appState.periodo})`);
+      window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
+    }
+
+    function renderCharts(rows) {
+      const groupMap = {};
+      rows.forEach(r => {
+        if (!groupMap[r.grupo]) {
+          groupMap[r.grupo] = { aprob: 0, prog: 0 };
+        }
+        groupMap[r.grupo].aprob += r.totalAprob;
+        groupMap[r.grupo].prog += r.totalProg;
+      });
+
+      const groupLabels = Object.keys(groupMap);
+      const aprobData = groupLabels.map(g => round2(groupMap[g].aprob));
+      const progData = groupLabels.map(g => round2(groupMap[g].prog));
+
+      const ctxGrupos = document.getElementById('chartGrupos').getContext('2d');
+      if (appState.charts.grupos) appState.charts.grupos.destroy();
+
+      appState.charts.grupos = new Chart(ctxGrupos, {
+        type: 'bar',
+        data: {
+          labels: groupLabels,
+          datasets: [
+            {
+              label: 'Aprobado RALL (hrs)',
+              data: aprobData,
+              backgroundColor: '#005CA9',
+              borderRadius: 6
+            },
+            {
+              label: 'Programado TXT (hrs)',
+              data: progData,
+              backgroundColor: '#009FE3',
+              borderRadius: 6
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'top', labels: { font: { family: 'Inter', size: 11, weight: 'bold' } } }
+          },
+          scales: {
+            x: { ticks: { font: { family: 'Inter', size: 10 } } },
+            y: { beginAtZero: true, ticks: { font: { family: 'Inter', size: 10 } } }
+          }
+        }
+      });
+
+      const sortedDev = [...rows]
+        .filter(r => Math.abs(r.saldo) > 0)
+        .sort((a, b) => Math.abs(b.saldo) - Math.abs(a.saldo))
+        .slice(0, 10);
+
+      const devLabels = sortedDev.map(r => `${r.grupo.slice(0, 10)}. - ${r.servicio.slice(0, 18)}`);
+      const devValues = sortedDev.map(r => r.saldo);
+      const devColors = devValues.map(v => v > 0 ? '#E11D48' : '#10B981');
+
+      const ctxDev = document.getElementById('chartDesviaciones').getContext('2d');
+      if (appState.charts.desviaciones) appState.charts.desviaciones.destroy();
+
+      appState.charts.desviaciones = new Chart(ctxDev, {
+        type: 'bar',
+        data: {
+          labels: devLabels,
+          datasets: [
+            {
+              label: 'Desviación (+ Exceso / - Disponible)',
+              data: devValues,
+              backgroundColor: devColors,
+              borderRadius: 6
+            }
+          ]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            x: { ticks: { font: { family: 'Inter', size: 10 } } },
+            y: { ticks: { font: { family: 'Inter', size: 10, weight: '600' } } }
+          }
+        }
+      });
+    }
+
+    function switchTab(tabName) {
+      ['matriz', 'personal', 'alertas', 'graficos'].forEach(t => {
+        const btn = document.getElementById(`tab-btn-${t}`);
+        const content = document.getElementById(`tab-content-${t}`);
+        if (t === tabName) {
+          btn.className = "tab-btn px-4 py-2.5 text-xs sm:text-sm font-bold rounded-t-xl border-b-2 border-essalud-blue text-essalud-blue bg-white transition flex items-center gap-2 cursor-pointer";
+          content.classList.remove('hidden');
+        } else {
+          btn.className = "tab-btn px-4 py-2.5 text-xs sm:text-sm font-semibold rounded-t-xl border-b-2 border-transparent text-slate-600 hover:text-essalud-blue transition flex items-center gap-2 cursor-pointer";
+          content.classList.add('hidden');
+        }
+      });
+      if (tabName === 'graficos') {
+        renderCharts(getComputedRows());
+      }
+    }
+
+    function toggleConsolidarEnfermeria() {
+      appState.consolidarEnfermeria = document.getElementById('chkConsolidarEnf').checked;
+      updateLastUpdatedTimestamp();
+      refreshAllViews();
+      showToast(
+        appState.consolidarEnfermeria
+          ? 'Consolidado: Enfermería Procedimientos (150 h) sumado a Consulta Externa.'
+          : 'Vista separada: Enfermería Procedimientos y Consulta Externa mostrados individualmente.',
+        'info'
+      );
+    }
+
+    function openUploadModal() {
+      if (!appState.currentUser || appState.currentUser.role !== 'ADMIN') {
+        showToast('Acceso denegado: Su perfil es de Solo Visualización. Solo el DNI 42283343 puede cargar archivos.', 'error');
+        return;
+      }
+      document.getElementById('uploadErrorBox').classList.add('hidden');
+      document.getElementById('excelValidationBadge').classList.add('hidden');
+      document.getElementById('txtValidationBadge').classList.add('hidden');
+      const modal = document.getElementById('uploadModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeUploadModal() {
+      const modal = document.getElementById('uploadModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function cleanCellText(val) {
+      return String(val === null || val === undefined ? '' : val)
+        .replace(/[\r\n]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    function parseNumericCell(val) {
+      if (val === null || val === undefined || val === '') return 0;
+      if (typeof val === 'number') return isNaN(val) ? 0 : val;
+      const str = String(val).trim();
+      if (/^\d+:\d{1,2}$/.test(str)) {
+        const [hh, mm] = str.split(':').map(Number);
+        return round2(hh + (mm / 60));
+      }
+      const cleaned = str.replace(/,/g, '');
+      const num = parseFloat(cleaned);
+      return isNaN(num) ? 0 : num;
+    }
+
+    function normalizeExcelGroup(raw) {
+      const s = cleanCellText(raw).toUpperCase();
+      if (s.includes('ENFERM')) return 'ENFERMERAS';
+      if (s.includes('MEDIC') && !s.includes('TECNOLOG')) return 'MEDICOS';
+      if (s.includes('TECNOLOG')) return 'TECNOLOGO MEDICO';
+      if (s.includes('QUIM') || s.includes('FARMAC')) return 'QUIM-FARMACIA';
+      if (s.includes('TECNICO')) return 'TECNICOS ASISTENCIALES';
+      if (s.includes('AUXILIAR')) return 'AUXILIARES ASISTENCIALES';
+      if (s.includes('DIGITADOR')) return 'DIGITADOR ASISTENCIAL';
+      if (s.includes('CHOFER')) return 'CHOFER ASISTENCIAL';
+      if (s.includes('NUTRIC')) return 'NUTRICIONISTA';
+      if (s.includes('OBSTETR')) return 'OBSTETRICES';
+      if (s.includes('CONTINGENC') || s.includes('CASOS ESPECIALES')) return 'PROGRAMACION PARA CASOS ESPECIALES Y CONTINGENCIAS';
+      return s || 'OTROS';
+    }
+
+    function normalizeExcelService(rawServ, grupo) {
+      const s = cleanCellText(rawServ).toUpperCase();
+      if (!s && grupo.includes('CONTINGENC')) return 'CONTINGENCIAS';
+      if (s.includes('CONTINGENC')) return 'CONTINGENCIAS';
+      if (s.includes('EMERGENC') || s.includes('URGENC')) {
+        return grupo === 'MEDICOS' ? 'EMERGENCIA / URGENCIA' : 'EMERGENCIA';
+      }
+      if (s.includes('CONSULTA EXTERNA/EMG')) return 'CONSULTA EXTERNA/EMG. Y OTROS';
+      if (s.includes('CONSULTA')) return 'CONSULTA EXTERNA';
+      if (s.includes('HOSPITALIZ')) return 'HOSPITALIZACION';
+      if (s.includes('QUIRURG')) return 'CENTRO QUIRURGICO';
+      if (s.includes('RECUPERACION')) return 'SALA DE RECUPERACION';
+      if (s.includes('PROCEDIM')) return 'PROCEDIMIENTOS';
+      if (s.includes('IMAGEN') || s.includes('IMÁGEN')) return 'DIAG. POR IMÁGENES';
+      if (s.includes('PATOLOGIA CLINICA')) return 'PATOLOGIA CLINICA';
+      if (s.includes('FIS.') || s.includes('REHAB')) return 'MEDICINA FIS. Y REHAB.';
+      if (s.includes('FARMAC')) return 'FARMACIA';
+      return s || 'OTROS SERVICIOS';
+    }
+
+    function mapTxtRecordToRall(grpoOcup, area, serv, subact, tipProg) {
+      const g = cleanCellText(grpoOcup).toUpperCase();
+      const a = cleanCellText(area).toUpperCase();
+      const s = cleanCellText(serv).toUpperCase();
+      const sub = cleanCellText(subact).toUpperCase();
+      const tip = cleanCellText(tipProg).toUpperCase();
+
+      if (g.includes('MEDICO') && !g.includes('TECN')) {
+        if (a.includes('CONSULTA')) return { grupo: 'MEDICOS', servicio: 'CONSULTA EXTERNA' };
+        if (a.includes('URGENC') || a.includes('EMERGENC')) return { grupo: 'MEDICOS', servicio: 'EMERGENCIA / URGENCIA' };
+        if (a.includes('HOSPITALIZ')) return { grupo: 'MEDICOS', servicio: 'HOSPITALIZACION' };
+        if (a.includes('QUIRURG')) return { grupo: 'MEDICOS', servicio: 'CENTRO QUIRURGICO' };
+        if (a.includes('DIAGNOSTICO') || s.includes('RADIODIAG') || sub.includes('ECOGRAF')) {
+          return { grupo: 'MEDICOS', servicio: 'DIAG. POR IMÁGENES' };
+        }
+        return { grupo: 'MEDICOS', servicio: a || 'CONSULTA EXTERNA' };
+      }
+
+      if (g.includes('ENFERMERA')) {
+        if (a.includes('URGENC') || a.includes('EMERGENC')) return { grupo: 'ENFERMERAS', servicio: 'EMERGENCIA' };
+        if (a.includes('HOSPITALIZ')) return { grupo: 'ENFERMERAS', servicio: 'HOSPITALIZACION' };
+        if (a.includes('QUIRURG')) {
+          if (sub.includes('RECUPERACION')) return { grupo: 'ENFERMERAS', servicio: 'SALA DE RECUPERACION' };
+          return { grupo: 'ENFERMERAS', servicio: 'CENTRO QUIRURGICO' };
+        }
+        return { grupo: 'ENFERMERAS', servicio: 'CONSULTA EXTERNA' };
+      }
+
+      if (g.includes('TECN.MED.REHAB') || s.includes('TERAPIA FISICA')) {
+        return { grupo: 'TECNOLOGO MEDICO', servicio: 'MEDICINA FIS. Y REHAB.' };
+      }
+      if (g.includes('TECN.MED.LABOR') || s.includes('LABORATORIO')) {
+        return { grupo: 'TECNOLOGO MEDICO', servicio: 'PATOLOGIA CLINICA' };
+      }
+      if (g.includes('TECN.MED.RADIOL') || s.includes('RADIODIAG')) {
+        return { grupo: 'TECNOLOGO MEDICO', servicio: 'DIAG. POR IMÁGENES' };
+      }
+
+      if (g.includes('QUIMICO FARM')) {
+        return { grupo: 'QUIM-FARMACIA', servicio: 'FARMACIA' };
+      }
+
+      if (g.includes('TEC.ENFERMERIA') || g.includes('TEC.SERV.ASIST') || g.includes('PROFES.TECNICO')) {
+        if (a.includes('HOSPITALIZ')) return { grupo: 'TECNICOS ASISTENCIALES', servicio: 'HOSPITALIZACION' };
+        if (a.includes('QUIRURG')) return { grupo: 'TECNICOS ASISTENCIALES', servicio: 'CENTRO QUIRURGICO' };
+        if (a.includes('URGENC') || a.includes('EMERGENC')) return { grupo: 'TECNICOS ASISTENCIALES', servicio: 'EMERGENCIA' };
+        if (a.includes('DIAGNOSTICO')) {
+          if (sub.includes('PRESCRIPCIONES')) return { grupo: 'TECNICOS ASISTENCIALES', servicio: 'FARMACIA' };
+          if (sub.includes('RADIOLOGIC')) return { grupo: 'TECNICOS ASISTENCIALES', servicio: 'DIAG. POR IMÁGENES' };
+          return { grupo: 'TECNICOS ASISTENCIALES', servicio: 'PATOLOGIA CLINICA' };
+        }
+        if (a.includes('CONSULTA')) {
+          if (tip.includes('PROCEDIMIENTO') || sub.includes('PROCEDIMIENTO') || sub.includes('AGENTES FISICOS') || sub.includes('REFRACCION')) {
+            return { grupo: 'TECNICOS ASISTENCIALES', servicio: 'PROCEDIMIENTOS' };
+          }
+          return { grupo: 'TECNICOS ASISTENCIALES', servicio: 'CONSULTA EXTERNA' };
+        }
+        return { grupo: 'TECNICOS ASISTENCIALES', servicio: a || 'CONSULTA EXTERNA' };
+      }
+
+      if (g.includes('AUX.SERV.ASIST') || g.includes('AUXILIAR')) {
+        if (a.includes('HOSPITALIZ')) return { grupo: 'AUXILIARES ASISTENCIALES', servicio: 'HOSPITALIZACION' };
+        if (a.includes('URGENC') || a.includes('EMERGENC')) return { grupo: 'AUXILIARES ASISTENCIALES', servicio: 'EMERGENCIA' };
+        if (a.includes('QUIRURG')) return { grupo: 'AUXILIARES ASISTENCIALES', servicio: 'CENTRO QUIRURGICO' };
+        if (a.includes('DIAGNOSTICO')) return { grupo: 'AUXILIARES ASISTENCIALES', servicio: 'FARMACIA' };
+        return { grupo: 'AUXILIARES ASISTENCIALES', servicio: 'CONSULTA EXTERNA' };
+      }
+
+      if (g.includes('DIGITAD')) return { grupo: 'DIGITADOR ASISTENCIAL', servicio: 'CONSULTA EXTERNA/EMG. Y OTROS' };
+      if (g.includes('CHOFER')) return { grupo: 'CHOFER ASISTENCIAL', servicio: 'EMERGENCIA' };
+      if (g.includes('NUTRICION')) return { grupo: 'NUTRICIONISTA', servicio: 'CONSULTA EXTERNA' };
+      if (g.includes('OBSTETR')) return { grupo: 'OBSTETRICES', servicio: 'HOSPITALIZACION' };
+
+      return { grupo: g || 'OTROS', servicio: a || 'OTROS SERVICIOS' };
+    }
+
+    /**
+     * Parsea el Excel (Formato N° 01 RALL) delimitando estrictamente el bloque de HORAS
+     * (índices 18, 19, 21, 23, 24 hasta TOTAL Nº HORAS (4)) separado del bloque PRESUPUESTO (27..33).
+     */
+    async function parseRallExcelFile(file) {
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data, { type: 'array' });
+      const sheetName = workbook.SheetNames.find(n => n.toUpperCase().includes('HOJA1')) || workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      const matrix = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null });
+
+      let headerRowIdx = -1;
+      for (let r = 0; r < Math.min(matrix.length, 15); r++) {
+        const rowStr = (matrix[r] || []).map(c => cleanCellText(c).toUpperCase()).join(' | ');
+        if (rowStr.includes('PROFESIONAL DE SALUD')) {
+          headerRowIdx = r;
+          break;
+        }
+      }
+      if (headerRowIdx === -1) headerRowIdx = 3;
+
+      const rMain = matrix[headerRowIdx] || [];
+      const rSub1 = matrix[headerRowIdx + 1] || [];
+      const rSub2 = matrix[headerRowIdx + 2] || [];
+      const maxCols = Math.max(rMain.length, rSub1.length, rSub2.length);
+
+      const col24Header = `${cleanCellText(rMain[24])} ${cleanCellText(rSub1[24])} ${cleanCellText(rSub2[24])}`.toUpperCase();
+      const isStandardFormato01 = col24Header.includes('TOTAL');
+
+      let colHE = 18;
+      let colRPCT = 19;
+      let colPctCons = 21;
+      let colPctProc = 23;
+      let colTotal = 24;
+      let colObs = 26;
+      let finalBudgetCols = [27, 29, 31, 33];
+
+      if (!isStandardFormato01) {
+        let endHoursCol = 25;
+        for (let c = 17; c < maxCols; c++) {
+          const allH = `${cleanCellText(rMain[c])} ${cleanCellText(rSub1[c])} ${cleanCellText(rSub2[c])}`.toUpperCase();
+          if (allH.includes('TOTAL') && allH.includes('(4)')) {
+            colTotal = c;
+            endHoursCol = c;
+            break;
+          }
+          if (allH.includes('PRESUPUESTO')) {
+            endHoursCol = c - 1;
+            break;
+          }
+        }
+
+        for (let c = 17; c <= endHoursCol; c++) {
+          const h0 = cleanCellText(rMain[c]).toUpperCase();
+          const h1 = cleanCellText(rSub1[c]).toUpperCase();
+          const h2 = cleanCellText(rSub2[c]).toUpperCase();
+          const allH = `${h0} ${h1} ${h2}`;
+
+          if (allH.includes('HORAS EXTRAS') && !allH.includes('REQUERIDAS')) {
+            colHE = c;
+          } else if (allH.includes('HORAS RPCT')) {
+            colRPCT = c;
+          } else if (allH.includes('PCT-CONSULTA') || allH.includes('PCT CONSULTA')) {
+            colPctCons = (h2.includes('PERSONAL') || h2.includes('CONSULTA')) ? c + 1 : c;
+          } else if (allH.includes('PCT-PROCEDIM') || allH.includes('PCT PROCEDIM')) {
+            colPctProc = (h2.includes('PERSONAL') || h2.includes('PROCEDIM')) ? c + 1 : c;
+          }
+        }
+
+        const detectedBudgets = [];
+        for (let c = endHoursCol + 1; c < maxCols; c++) {
+          const h2 = cleanCellText(rSub2[c]).toUpperCase();
+          const allH = `${cleanCellText(rMain[c])} ${cleanCellText(rSub1[c])} ${h2}`.toUpperCase();
+          if (allH.includes('OBSERVACION')) colObs = c;
+          if (h2.includes('S/.') || h2.includes('S/') || allH.includes('VALORIZACION')) {
+            detectedBudgets.push(c);
+          }
+        }
+        if (detectedBudgets.length > 0) finalBudgetCols = detectedBudgets;
+      }
+
+      const startDataRow = headerRowIdx + 3;
+      const records = [];
+      let currentGroup = '';
+      let totalPresupuesto = 0;
+
+      for (let r = startDataRow; r < matrix.length; r++) {
+        const row = matrix[r];
+        if (!row) continue;
+
+        const rawCol0 = cleanCellText(row[0]);
+        const rawCol1 = cleanCellText(row[1]);
+
+        if (rawCol0.toUpperCase().startsWith('TOTAL') || rawCol0.toUpperCase().startsWith('FUENTE')) {
+          break;
+        }
+
+        if (rawCol0) {
+          currentGroup = normalizeExcelGroup(rawCol0);
+        }
+        if (!currentGroup && !rawCol1) continue;
+
+        const grupo = currentGroup || 'OTROS';
+        const servicio = normalizeExcelService(rawCol1, grupo);
+
+        const he = parseNumericCell(row[colHE]);
+        const rpct = parseNumericCell(row[colRPCT]);
+        const pctCons = parseNumericCell(row[colPctCons]);
+        const pctProc = parseNumericCell(row[colPctProc]);
+        const totExcel = parseNumericCell(row[colTotal]);
+        const obs = cleanCellText(row[colObs]);
+
+        let presFila = 0;
+        finalBudgetCols.forEach(bc => {
+          presFila += parseNumericCell(row[bc]);
+        });
+        totalPresupuesto = round2(totalPresupuesto + presFila);
+
+        const sumModalidades = round2(he + rpct + pctCons + pctProc);
+        const efectivoAprob = sumModalidades > 0 ? sumModalidades : totExcel;
+
+        records.push({
+          grupo,
+          servicio,
+          he: round2(he),
+          rpct: round2(rpct),
+          pctCons: round2(pctCons),
+          pctProc: round2(pctProc),
+          total: round2(efectivoAprob),
+          presupuesto: round2(presFila),
+          obs
+        });
+      }
+
+      const sumTotalHoras = round2(records.reduce((acc, x) => acc + x.total, 0));
+      return { records, totalHoras: sumTotalHoras, totalPresupuesto };
+    }
+
+    /**
+     * Parsea un archivo TXT delimitado por '|' (HrasEfectivas) en Windows-1252 / UTF-8
+     * Excluye HORA NORMAL ORDINA y HORAS COMPENSACION de la contabilidad de horas extras/complementarias.
+     */
+    async function parseHrasEfectivasTxtFile(file) {
+      const buffer = await file.arrayBuffer();
+      let textContent = '';
+      try {
+        textContent = new TextDecoder('utf-8', { fatal: true }).decode(buffer);
+      } catch (e) {
+        textContent = new TextDecoder('windows-1252').decode(buffer);
+      }
+
+      const lines = textContent.split(/\r?\n/).filter(l => l.trim().length > 0);
+      if (lines.length < 2) {
+        throw new Error('El archivo TXT está vacío o no contiene filas de datos.');
+      }
+
+      const headers = lines[0].split('|').map(h => cleanCellText(h).toUpperCase());
+      const idxArea = headers.indexOf('AREA');
+      const idxServ = headers.indexOf('SERVICIO');
+      const idxSub = headers.indexOf('SUBACTIVIDAD');
+      const idxDni = headers.indexOf('DOC_PROFESIONAL');
+      const idxProf = headers.indexOf('PROFESIONAL');
+      const idxTip = headers.indexOf('TIP_PROGRAMACION');
+      const idxHrasProg = headers.indexOf('HRAS_PROG');
+      const idxHrsProg = headers.indexOf('HRS_PROG');
+      const idxHrasAten = headers.indexOf('HRAS_ATEN');
+      const idxHrsAten = headers.indexOf('HRS_ATEN');
+      const idxGrupo = headers.indexOf('GRPO_OCUPACIONAL');
+      const idxCond = headers.indexOf('COND_TRABAJADOR');
+
+      if (idxTip === -1 || (idxHrasProg === -1 && idxHrsProg === -1)) {
+        throw new Error('No se encontraron las columnas TIP_PROGRAMACION o HRAS_PROG en el TXT.');
+      }
+
+      let ordHrs = 0;
+      let compHrs = 0;
+      let nonOrdProgHrs = 0;
+      let nonOrdAtenHrs = 0;
+      const aggMap = new Map();
+
+      for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].split('|');
+        if (cols.length < 6) continue;
+
+        const tip = cleanCellText(cols[idxTip]).toUpperCase();
+        const progVal = idxHrasProg !== -1 && cols[idxHrasProg] !== undefined && cols[idxHrasProg].trim() !== ''
+          ? parseNumericCell(cols[idxHrasProg])
+          : parseNumericCell(cols[idxHrsProg]);
+
+        const atenVal = idxHrasAten !== -1 && cols[idxHrasAten] !== undefined && cols[idxHrasAten].trim() !== ''
+          ? parseNumericCell(cols[idxHrasAten])
+          : (idxHrsAten !== -1 ? parseNumericCell(cols[idxHrsAten]) : 0);
+
+        // 1. Excluir horas ordinarias
+        if (tip.includes('HORA NORMAL') || tip.includes('ORDINA')) {
+          ordHrs = round2(ordHrs + progVal);
+          continue;
+        }
+
+        // 2. Excluir HORAS COMPENSACION (no entran a contabilidad de horas extras/complementarias)
+        if (tip.includes('COMPENS')) {
+          compHrs = round2(compHrs + progVal);
+          continue;
+        }
+
+        if (progVal <= 0 && atenVal <= 0) continue;
+
+        const area = idxArea !== -1 ? cleanCellText(cols[idxArea]) : '';
+        const serv = idxServ !== -1 ? cleanCellText(cols[idxServ]) : '';
+        const subact = idxSub !== -1 ? cleanCellText(cols[idxSub]) : '';
+        const dni = idxDni !== -1 ? cleanCellText(cols[idxDni]) : 'S/D';
+        const prof = idxProf !== -1 ? cleanCellText(cols[idxProf]) : 'SIN NOMBRE';
+        const grpo = idxGrupo !== -1 ? cleanCellText(cols[idxGrupo]) : '';
+        const cond = idxCond !== -1 ? cleanCellText(cols[idxCond]) : '';
+
+        const mapped = mapTxtRecordToRall(grpo, area, serv, subact, tip);
+        nonOrdProgHrs = round2(nonOrdProgHrs + progVal);
+        nonOrdAtenHrs = round2(nonOrdAtenHrs + atenVal);
+
+        const aggKey = `${dni}|${prof}|${mapped.grupo}|${mapped.servicio}|${subact}|${tip}|${cond}`;
+        if (!aggMap.has(aggKey)) {
+          aggMap.set(aggKey, {
+            dni,
+            nombre: prof,
+            condicion: cond,
+            grupo: mapped.grupo,
+            servicio: mapped.servicio,
+            subactividad: subact || serv || area,
+            tipo: tip,
+            hProg: 0,
+            hAten: 0
+          });
+        }
+        const entry = aggMap.get(aggKey);
+        entry.hProg = round2(entry.hProg + progVal);
+        entry.hAten = round2(entry.hAten + atenVal);
+      }
+
+      return {
+        personnel: Array.from(aggMap.values()),
+        ordHrs,
+        compHrs,
+        nonOrdProgHrs,
+        nonOrdAtenHrs
+      };
+    }
+
+    async function previewSelectedFiles() {
+      const excelFile = document.getElementById('fileExcelInput').files[0];
+      const txtFile = document.getElementById('fileTxtInput').files[0];
+      const errBox = document.getElementById('uploadErrorBox');
+      errBox.classList.add('hidden');
+
+      if (excelFile) {
+        try {
+          const res = await parseRallExcelFile(excelFile);
+          const badge = document.getElementById('excelValidationBadge');
+          badge.innerHTML = `✓ Excel leído: <b>${res.records.length}</b> filas | Total Aprobado RALL: <b>${formatNum(res.totalHoras)} h</b> | Presupuesto: <b>S/. ${formatNum(res.totalPresupuesto)}</b>`;
+          badge.classList.remove('hidden');
+        } catch (err) {
+          errBox.textContent = `Error en Excel: ${err.message}`;
+          errBox.classList.remove('hidden');
+        }
+      }
+
+      if (txtFile) {
+        try {
+          const res = await parseHrasEfectivasTxtFile(txtFile);
+          const badge = document.getElementById('txtValidationBadge');
+          badge.innerHTML = `✓ TXT leído: <b>${res.personnel.length}</b> registros complementarios | Prog.: <b>${formatNum(res.nonOrdProgHrs)} h</b> (Efec.: <b>${formatNum(res.nonOrdAtenHrs)} h</b>) • Omitidas: Ordinarias <b>${formatNum(res.ordHrs)} h</b> y Compensación <b>${formatNum(res.compHrs)} h</b>`;
+          badge.classList.remove('hidden');
+        } catch (err) {
+          errBox.textContent = `Error en TXT: ${err.message}`;
+          errBox.classList.remove('hidden');
+        }
+      }
+    }
+
+    async function processUploadedFiles() {
+      if (!appState.currentUser || appState.currentUser.role !== 'ADMIN') {
+        showToast('Acceso denegado: Solo el Administrador (DNI 42283343) puede cargar y procesar archivos.', 'error');
+        closeUploadModal();
+        return;
+      }
+      const excelFile = document.getElementById('fileExcelInput').files[0];
+      const txtFile = document.getElementById('fileTxtInput').files[0];
+      const periodoInput = document.getElementById('inputPeriodoNuevo').value.trim() || 'Periodo Cargado - H.I. Albrecht';
+      const errBox = document.getElementById('uploadErrorBox');
+
+      if (!excelFile && !txtFile) {
+        errBox.textContent = 'Por favor seleccione al menos el archivo Excel (Formato N° 01 RALL) o el archivo TXT (HrasEfectivas).';
+        errBox.classList.remove('hidden');
+        return;
+      }
+
+      try {
+        const mergedMap = {};
+        let newPresupuesto = appState.presupuestoTotal;
+        let newOrdHrs = appState.horasOrdinarias;
+        let newCompHrs = appState.horasCompensacionOmitidas;
+        let newPersonnel = appState.personnel;
+
+        if (excelFile) {
+          const xlRes = await parseRallExcelFile(excelFile);
+          newPresupuesto = xlRes.totalPresupuesto;
+
+          xlRes.records.forEach(rec => {
+            const key = `${rec.grupo}__${rec.servicio}`;
+            if (!mergedMap[key]) {
+              mergedMap[key] = {
+                id: key,
+                grupo: rec.grupo,
+                servicio: rec.servicio,
+                notaServicio: rec.obs || '',
+                aprobHE: 0, aprobRPCT: 0, aprobPCTCons: 0, aprobPCTProc: 0,
+                progHE: 0, progRPCTCas: 0, progRPCTOtros: 0,
+                progDetalleTxt: '0.00 h',
+                efectivas: 0
+              };
+            }
+            mergedMap[key].aprobHE = round2(mergedMap[key].aprobHE + rec.he);
+            mergedMap[key].aprobRPCT = round2(mergedMap[key].aprobRPCT + rec.rpct);
+            mergedMap[key].aprobPCTCons = round2(mergedMap[key].aprobPCTCons + rec.pctCons);
+            mergedMap[key].aprobPCTProc = round2(mergedMap[key].aprobPCTProc + rec.pctProc);
+            if (rec.obs && !mergedMap[key].notaServicio) {
+              mergedMap[key].notaServicio = rec.obs;
+            }
+          });
+        } else {
+          appState.rawRows.forEach(r => {
+            const key = `${r.grupo}__${r.servicio}`;
+            mergedMap[key] = {
+              ...r,
+              id: key,
+              progHE: 0, progRPCTCas: 0, progRPCTOtros: 0,
+              progDetalleTxt: '0.00 h',
+              efectivas: 0
+            };
+          });
+        }
+
+        if (txtFile) {
+          const txtRes = await parseHrasEfectivasTxtFile(txtFile);
+          newPersonnel = txtRes.personnel;
+          newOrdHrs = txtRes.ordHrs;
+          newCompHrs = txtRes.compHrs;
+
+          txtRes.personnel.forEach(p => {
+            const key = `${p.grupo}__${p.servicio}`;
+            if (!mergedMap[key]) {
+              mergedMap[key] = {
+                id: key,
+                grupo: p.grupo,
+                servicio: p.servicio,
+                notaServicio: 'Sin techo aprobado en RALL',
+                aprobHE: 0, aprobRPCT: 0, aprobPCTCons: 0, aprobPCTProc: 0,
+                progHE: 0, progRPCTCas: 0, progRPCTOtros: 0,
+                progDetalleTxt: '',
+                efectivas: 0
+              };
+            }
+
+            const tipUpper = p.tipo.toUpperCase();
+            if (tipUpper.includes('EXTRA')) {
+              mergedMap[key].progHE = round2(mergedMap[key].progHE + p.hProg);
+            } else if (tipUpper.includes('CAS')) {
+              mergedMap[key].progRPCTCas = round2(mergedMap[key].progRPCTCas + p.hProg);
+            } else {
+              mergedMap[key].progRPCTOtros = round2(mergedMap[key].progRPCTOtros + p.hProg);
+            }
+            mergedMap[key].efectivas = round2(mergedMap[key].efectivas + p.hAten);
+          });
+        } else {
+          appState.personnel.forEach(p => {
+            if (p.tipo.toUpperCase().includes('COMPENS')) return;
+            const key = `${p.grupo}__${p.servicio}`;
+            if (!mergedMap[key]) {
+              mergedMap[key] = {
+                id: key,
+                grupo: p.grupo,
+                servicio: p.servicio,
+                notaServicio: 'Sin techo aprobado en RALL',
+                aprobHE: 0, aprobRPCT: 0, aprobPCTCons: 0, aprobPCTProc: 0,
+                progHE: 0, progRPCTCas: 0, progRPCTOtros: 0,
+                progDetalleTxt: '',
+                efectivas: 0
+              };
+            }
+            const tipUpper = p.tipo.toUpperCase();
+            if (tipUpper.includes('EXTRA')) {
+              mergedMap[key].progHE = round2(mergedMap[key].progHE + p.hProg);
+            } else if (tipUpper.includes('CAS')) {
+              mergedMap[key].progRPCTCas = round2(mergedMap[key].progRPCTCas + p.hProg);
+            } else {
+              mergedMap[key].progRPCTOtros = round2(mergedMap[key].progRPCTOtros + p.hProg);
+            }
+            mergedMap[key].efectivas = round2(mergedMap[key].efectivas + p.hAten);
+          });
+        }
+
+        const resultRows = Object.values(mergedMap).filter(item => {
+          const totA = item.aprobHE + item.aprobRPCT + item.aprobPCTCons + item.aprobPCTProc;
+          const totP = item.progHE + item.progRPCTCas + item.progRPCTOtros;
+          return (totA > 0 || totP > 0);
+        });
+
+        resultRows.forEach(item => {
+          const parts = [];
+          if (item.progHE > 0) parts.push(`${formatNum(item.progHE)} HE`);
+          if (item.progRPCTCas > 0) parts.push(`${formatNum(item.progRPCTCas)} RPCT-CAS`);
+          if (item.progRPCTOtros > 0) parts.push(`${formatNum(item.progRPCTOtros)} RPCT-Cons/Proc/Quir`);
+          item.progDetalleTxt = parts.length ? parts.join(' + ') : '0.00 h';
+        });
+
+        if (resultRows.length === 0) {
+          throw new Error('No se encontraron registros con horas aprobadas o programadas.');
+        }
+
+        appState.periodo = periodoInput;
+        appState.presupuestoTotal = newPresupuesto;
+        appState.horasOrdinarias = newOrdHrs;
+        appState.horasCompensacionOmitidas = newCompHrs;
+        appState.rawRows = resultRows;
+        appState.personnel = newPersonnel;
+        appState.consolidarEnfermeria = false;
+        document.getElementById('chkConsolidarEnf').checked = false;
+
+        closeUploadModal();
+        const ts = updateLastUpdatedTimestamp();
+        refreshAllViews();
+        if (typeof window.saveCorteToFirestore === 'function') {
+          await window.saveCorteToFirestore(true);
+        }
+        showToast(`Cruce completado (${resultRows.length} servicios) — Última actualización: ${ts}.`, 'success');
+      } catch (error) {
+        errBox.textContent = `Error al procesar archivos: ${error.message}`;
+        errBox.classList.remove('hidden');
+      }
+    }
+
+    async function restorePreloadedData() {
+      if (!appState.currentUser || appState.currentUser.role !== 'ADMIN') {
+        showToast('Acceso denegado: Solo el Administrador (DNI 42283343) puede restaurar los datos base.', 'error');
+        return;
+      }
+      appState.periodo = DEFAULT_DATA.periodo;
+      appState.presupuestoTotal = DEFAULT_DATA.presupuestoTotal;
+      appState.horasOrdinarias = DEFAULT_DATA.horasOrdinarias;
+      appState.horasCompensacionOmitidas = DEFAULT_DATA.horasCompensacionOmitidas;
+      appState.rawRows = JSON.parse(JSON.stringify(DEFAULT_DATA.rows));
+      appState.personnel = JSON.parse(JSON.stringify(DEFAULT_DATA.personnel));
+      appState.consolidarEnfermeria = false;
+      appState.statusFilter = 'ALL';
+      document.getElementById('chkConsolidarEnf').checked = false;
+      document.getElementById('filterGrupoSelect').value = 'ALL';
+      document.getElementById('searchMatrixInput').value = '';
+      setStatusFilter('ALL');
+      const ts = updateLastUpdatedTimestamp();
+      refreshAllViews();
+      if (typeof window.saveCorteToFirestore === 'function') {
+        await window.saveCorteToFirestore(true);
+      }
+      showToast(`Datos oficiales de Noviembre 2026 restaurados — Última actualización: ${ts}.`, 'success');
+    }
+
+    function exportToExcel() {
+      const rows = getComputedRows();
+      const cutTimestamp = appState.lastUpdated || formatTimestampPE(new Date());
+
+      const sheetMatrizData = rows.map(r => ({
+        'PERIODO': appState.periodo,
+        'FECHA/HORA ACTUALIZACIÓN': cutTimestamp,
+        'PUBLICADO POR': appState.publishedBy,
+        'GRUPO OCUPACIONAL': r.grupo,
+        'SERVICIO': r.servicio,
+        'OBSERVACIÓN': r.notaServicio || '',
+        'APROBADO HE (h)': r.aprobHE,
+        'APROBADO RPCT (h)': r.aprobRPCT,
+        'APROBADO PCT-CONS (h)': r.aprobPCTCons,
+        'APROBADO PCT-PROC (h)': r.aprobPCTProc,
+        'TOTAL APROBADO RALL (h)': r.totalAprob,
+        'PROG. HE (h)': r.progHE,
+        'PROG. RPCT-CAS (h)': r.progRPCTCas,
+        'PROG. RPCT CONS/PROC/QUIR (h)': r.progRPCTOtros,
+        'TOTAL PROGRAMADO TXT (h)': r.totalProg,
+        'HORAS EFECTIVAS ATENDIDAS (h)': r.efectivas,
+        'SALDO (PROG - APROB)': r.saldo,
+        '% EJECUCIÓN': r.totalAprob > 0 ? `${r.pct.toFixed(1)}%` : 'SIN APROBACIÓN',
+        'ESTADO': r.statusLabel
+      }));
+
+      const sheetPersonalData = appState.personnel.map(p => ({
+        'FECHA/HORA ACTUALIZACIÓN': cutTimestamp,
+        'PUBLICADO POR': appState.publishedBy,
+        'DNI': p.dni,
+        'PROFESIONAL': p.nombre,
+        'RÉGIMEN': p.condicion || '',
+        'GRUPO OCUPACIONAL': p.grupo,
+        'SERVICIO': p.servicio,
+        'SUBACTIVIDAD': p.subactividad,
+        'TIPO PROGRAMACIÓN': p.tipo,
+        'HORAS PROGRAMADAS': p.hProg,
+        'HORAS EFECTIVAS ATENDIDAS': p.hAten
+      }));
+
+      const wb = XLSX.utils.book_new();
+      const wsMatriz = XLSX.utils.json_to_sheet(sheetMatrizData);
+      const wsPersonal = XLSX.utils.json_to_sheet(sheetPersonalData);
+
+      XLSX.utils.book_append_sheet(wb, wsMatriz, 'Cruce_RALL_vs_Prog');
+      XLSX.utils.book_append_sheet(wb, wsPersonal, 'Detalle_Nominal_TXT');
+
+      const fileName = `Control_Horas_RALL_Albrecht_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+      showToast(`Reporte Excel descargado: ${fileName}`, 'success');
+    }
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      const colors = {
+        success: 'bg-emerald-700 text-white border-emerald-500',
+        error: 'bg-rose-700 text-white border-rose-500',
+        info: 'bg-essalud-dark text-white border-essalud-sky'
+      };
+      toast.className = `pointer-events-auto px-4 py-3 rounded-xl shadow-lg border-l-4 text-xs font-semibold flex items-center gap-2.5 animate-fade-in ${colors[type] || colors.info}`;
+      toast.innerHTML = `<span>${message}</span>`;
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+  </script>
+</body>
+</html>
